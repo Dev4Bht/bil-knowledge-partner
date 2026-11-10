@@ -184,7 +184,7 @@ export function AnswerView({ response, language, onOpenCitation, onRetry, idPref
             {response.claims.map((claim, i) => (
               <li key={i} className="text-[15.5px] leading-relaxed text-ink">
                 <span>{claim.text}</span>{" "}
-                <span className="inline-flex flex-wrap gap-1.5 align-middle">
+                <span className="mt-1 flex min-w-0 flex-wrap gap-1.5">
                   {claim.citation_ids.map((id) => {
                     const hit = byId.get(id);
                     return hit ? <CitationChip key={id} citation={hit.c} index={hit.n} onOpen={onOpenCitation} /> : null;
