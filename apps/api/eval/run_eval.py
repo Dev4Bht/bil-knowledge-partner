@@ -30,8 +30,14 @@ class Client:
     def __init__(self, api: str, email: str, password: str):
         self.api = api
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
-        if self.request("POST", "/auth/login", {"email": email, "password": password}).get("_http"):
-            raise SystemExit(f"could not sign in as {email}")
+        for attempt in range(6):  # the API limits sign-ins per minute; wait it out instead of aborting a long run
+            result = self.request("POST", "/auth/login", {"email": email, "password": password})
+            if not result.get("_http"):
+                return
+            if result["_http"] != 429:
+                break
+            time.sleep(20)
+        raise SystemExit(f"could not sign in as {email}: {result}")
 
     def _open(self, request):
         try:
