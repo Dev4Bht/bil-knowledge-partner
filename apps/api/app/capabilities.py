@@ -50,8 +50,10 @@ def compute_capabilities(settings: Settings, db: Session) -> CapabilitiesOut:
         notes.append("The local model server (Ollama) is not reachable.")
     elif model is None:
         notes.append(f"The local model '{settings.ollama_model}' has not been downloaded.")
-    if TRANSLATION_BUILT:
+    if TRANSLATION_BUILT and settings.translation_enabled:
         notes.append("Dzongkha drafts are experimental machine translations and always need human validation.")
+    elif not settings.translation_enabled:
+        notes.append("Dzongkha drafting is switched off on this server; replies are drafted in English only.")
     return CapabilitiesOut(dms=True, extraction=EXTRACTION_BUILT, search=SEARCH_BUILT and EXTRACTION_BUILT,
-                           llm=llm and AGENTS_BUILT, translation=TRANSLATION_BUILT and llm,
+                           llm=llm and AGENTS_BUILT, translation=TRANSLATION_BUILT and settings.translation_enabled and llm,
                            llm_model=model if llm else None, notes=notes)

@@ -97,3 +97,10 @@ def test_seed_refuses_to_run_in_production(db, tmp_path):
     settings = Settings(_env_file=None, app_env="production", jwt_secret="x" * 40, seed_demo=True, demo_password="pw")
     with pytest.raises(RuntimeError):
         seed_demo(db, LocalFileStore(tmp_path), settings)
+
+
+def test_capabilities_report_translation_off_when_disabled(db, monkeypatch):
+    from app.capabilities import compute_capabilities
+
+    off = compute_capabilities(Settings(_env_file=None, translation_enabled=False, ollama_base_url="http://127.0.0.1:9"), db)
+    assert off.translation is False and any("switched off" in n for n in off.notes)
