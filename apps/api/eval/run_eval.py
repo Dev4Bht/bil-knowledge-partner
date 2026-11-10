@@ -70,9 +70,8 @@ def matches(want: list, title: str, section: str | None, page: int | None) -> bo
         return False
     if not locator:
         return True
-    if re.fullmatch(r"p\d+", locator):
-        return page == int(locator[1:])
-    return locator.lower() in (section or "").lower()
+    options = locator.split("|")  # "p30|p31": a passage that straddles a page break may be cited from either page
+    return any((page == int(o[1:])) if re.fullmatch(r"p\d+", o) else (o.lower() in (section or "").lower()) for o in options)
 
 
 def setup_controls(admin: Client, setup: list[dict]) -> None:
@@ -106,13 +105,15 @@ def setup_controls(admin: Client, setup: list[dict]) -> None:
     print("warning: indexing did not finish within 7.5 minutes; results may be affected")
 
 
-def evaluate(api: str, password: str) -> dict:
+def evaluate(api: str, password: str, only: set[str] | None = None) -> dict:
     data = json.loads((ROOT / "questions.json").read_text())
     clients: dict[str, Client] = {}
     get = lambda role: clients.setdefault(role, Client(api, EMAIL[role], password))
     setup_controls(get("admin"), data["setup"])
     rows = []
     for q in data["questions"]:
+        if only and q["id"].split("-")[0] not in only and q["id"] not in only:
+            continue
         client, e = get(q["role"]), q["expect"]
         started = time.monotonic()
         result = client.request("POST", "/chat/ask", {"question": q["question"], "include_history": q.get("include_history", False)})
@@ -192,9 +193,10 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--api", default="http://localhost:8000")
     parser.add_argument("--password", required=True)
+    parser.add_argument("--only", help="comma-separated question ids to run, e.g. R01,R05,C3")
     parser.add_argument("--out", default=str(ROOT.parents[2] / "docs" / "evaluation-results.json"))
     args = parser.parse_args()
-    report = evaluate(args.api, args.password)
+    report = evaluate(args.api, args.password, set(args.only.split(",")) if args.only else None)
     Path(args.out).write_text(json.dumps(report, indent=2))
     for row in report["rows"]:
         failed = [k for k, v in row["checks"].items() if not v]

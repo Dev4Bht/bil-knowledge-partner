@@ -32,8 +32,9 @@ class ScriptedLLM:
     """Returns structured outputs by role. `calls` records which roles ran and what they were shown."""
 
     def __init__(self, *, plan=None, synth=None, conflicts=None, supported=True, reply="Flood damage is covered, subject to exclusions.",
-                 same_meaning=True, down=False):
+                 same_meaning=True, down=False, select=None, same_subject=True):
         self.plan, self.synth, self.conflicts, self.supported = plan, synth, conflicts, supported
+        self.select, self.same_subject = select, same_subject
         self.reply, self.same_meaning, self.down = reply, same_meaning, down
         self.calls: list[tuple[str, str]] = []
 
@@ -41,10 +42,16 @@ class ScriptedLLM:
         if self.down:
             raise LLMUnavailable("down")
         role = {prompts.SUPERVISOR: "supervisor", prompts.CONFLICT: "conflict", prompts.SYNTHESIS: "synthesis",
-                prompts.VERIFIER: "verifier", prompts.REPLY: "reply", prompts.JUDGE: "judge"}[system]
+                prompts.VERIFIER: "verifier", prompts.REPLY: "reply", prompts.JUDGE: "judge",
+                prompts.SELECT: "select", prompts.ADJUDICATE: "adjudicate"}[system]
         self.calls.append((role, user))
         if role == "supervisor":
             return self.plan or {"search_queries": [], "intent": "answer"}
+        if role == "select":
+            ids = re.findall(r"^(E\d+) \[", user, re.M)
+            return {"relevant_ids": self.select(ids) if callable(self.select) else (self.select if self.select is not None else ids)}
+        if role == "adjudicate":
+            return {"subject_a": "a", "subject_b": "b", "same_subject": self.same_subject}
         if role == "conflict":
             return {"conflicts": self.conflicts(user) if callable(self.conflicts) else (self.conflicts or [])}
         if role == "synthesis":
@@ -135,7 +142,7 @@ def test_a_supported_question_is_answered_with_citations_and_both_drafts(seeded)
     assert all(c.version_status.value == "approved_current" for c in result.citations)
     assert result.drafts.en and result.drafts.dzo and not result.draft_notes
     # evidence spans several documents, so the policy step also runs the (code-verified) conflict check
-    assert llm.roles() == ["supervisor", "conflict", "synthesis", "verifier", "reply", "judge"]
+    assert llm.roles() == ["supervisor", "conflict", "select", "synthesis", "verifier", "reply", "judge"]
     assert any(w.kind == "older_version_ignored" for w in result.version_warnings)
     assert [s.agent for s in result.steps] == ["Supervisor", "Retrieval", "Policy & Version", "Synthesis", "Verification", "Bilingual Response"]
 
@@ -176,25 +183,80 @@ def test_a_failed_verification_retries_retrieval_exactly_once_then_abstains(seed
     assert result.status == "no_evidence" and result.abstention_reason == "The documents do not say."
 
 
-def test_a_real_conflict_is_reported_and_no_customer_draft_is_written(seeded):
+def test_a_real_conflict_is_reported_from_verbatim_quotes_and_no_customer_draft_is_written(seeded):
     def conflicts(prompt):
         found = {doc: eid for eid, doc, _v, text in passages(prompt) if "within" in text and "days" in text}
         return [{"topic": "the claim reporting period", "evidence_id_a": found["Motor Insurance Handbook"], "quote_a": "within 7 days",
                  "evidence_id_b": found["Circular 2024/017 Motor Claims"], "quote_b": "within 14 days"}]
 
-    def synth(prompt):
-        return {"answerable": True, "missing_info": None, "claims": [
-            {"text": "Conflict: the Motor Insurance Handbook says a claim must be reported within 7 days of the loss.", "evidence_ids": [e for e, d, _v, t in passages(prompt) if d == "Motor Insurance Handbook" and "within 7 days" in t][:1]},
-            {"text": "Conflict: Circular 2024/017 says motor claims must be reported within 14 days of the loss.", "evidence_ids": [e for e, d, _v, t in passages(prompt) if d.startswith("Circular") and "14 days" in t][:1]}]}
-
-    llm = ScriptedLLM(conflicts=conflicts, synth=synth)
+    llm = ScriptedLLM(conflicts=conflicts)
     result = ask(seeded, llm, "How many days do we have to report a motor claim after the loss? within days")
     assert result.status == "conflict" and "disagree" in result.abstention_reason
+    assert [c.text for c in result.claims] == [
+        "Conflict: Motor Insurance Handbook (\u00a75.1 Reporting) says \u201cwithin 7 days\u201d.",
+        "Conflict: Circular 2024/017 Motor Claims (\u00a72 Reporting period) says \u201cwithin 14 days\u201d."]
     assert result.drafts.en is None and result.drafts.dzo is None and "conflict" in result.draft_notes[0]
     message = next(w.message for w in result.version_warnings if w.kind == "conflict")
     assert "within 7 days" in message and "within 14 days" in message
     assert {c.title for c in result.citations} >= {"Motor Insurance Handbook", "Circular 2024/017 Motor Claims"}
-    assert "reply" not in llm.roles()
+    assert llm.roles() == ["supervisor", "conflict", "adjudicate", "verifier"]  # no model wrote the answer, none drafted a reply
+
+
+def test_two_documents_about_different_things_are_not_a_conflict(seeded):
+    """The real R07 and R08 failures: an insurer's capital versus a reinsurer's, or two regulations' own in-force dates."""
+    def conflicts(prompt):
+        found = {doc: eid for eid, doc, _v, text in passages(prompt) if "within" in text and "days" in text}
+        return [{"topic": "the claim reporting period", "evidence_id_a": found["Motor Insurance Handbook"], "quote_a": "within 7 days",
+                 "evidence_id_b": found["Circular 2024/017 Motor Claims"], "quote_b": "within 14 days"}]
+
+    llm = ScriptedLLM(conflicts=conflicts, synth=flood_claims, same_subject=False)
+    result = ask(seeded, llm, FLOOD_Q + " within days")
+    assert "adjudicate" in llm.roles()
+    assert result.status == "answered" and not any(w.kind == "conflict" for w in result.version_warnings)
+
+
+def test_a_conflict_the_adjudicator_cannot_confirm_is_dropped(seeded):
+    class AdjudicatorDown(ScriptedLLM):
+        def json(self, *, system, user, schema, max_tokens=700):
+            if system == prompts.ADJUDICATE:
+                raise LLMUnavailable("down")
+            return super().json(system=system, user=user, schema=schema, max_tokens=max_tokens)
+
+    def conflicts(prompt):
+        found = {doc: eid for eid, doc, _v, text in passages(prompt) if "within" in text and "days" in text}
+        return [{"topic": "the claim reporting period", "evidence_id_a": found["Motor Insurance Handbook"], "quote_a": "within 7 days",
+                 "evidence_id_b": found["Circular 2024/017 Motor Claims"], "quote_b": "within 14 days"}]
+
+    result = ask(seeded, AdjudicatorDown(conflicts=conflicts, synth=flood_claims), FLOOD_Q + " within days")
+    assert not any(w.kind == "conflict" for w in result.version_warnings)  # unconfirmed, so no conflict is raised
+
+
+def test_synthesis_sees_only_the_passages_the_selector_chose(seeded):
+    seen = {}
+
+    def synth(prompt):
+        seen["ids"] = [i for i, *_ in passages(prompt)]
+        return flood_claims(prompt)
+
+    def only_flood(ids):
+        return ids[:1]
+
+    llm = ScriptedLLM(synth=synth, select=only_flood)
+    result = ask(seeded, llm, FLOOD_Q)
+    # the model's choice leads, the rare-word safety net may add a few more, and it is never shown all eight passages
+    assert seen["ids"][0] == "E1" and 1 <= len(seen["ids"]) <= 6
+    assert result.status in ("answered", "no_evidence")
+
+
+def test_an_unusable_selection_falls_back_to_all_the_evidence(seeded):
+    seen = {}
+
+    def synth(prompt):
+        seen["ids"] = [i for i, *_ in passages(prompt)]
+        return flood_claims(prompt)
+
+    ask(seeded, ScriptedLLM(synth=synth, select=["E99", "nonsense"]), FLOOD_Q)
+    assert len(seen["ids"]) > 1
 
 
 def test_a_conflict_the_model_invents_is_discarded_by_code(seeded):
@@ -370,3 +432,58 @@ def test_translation_model_is_released_when_idle_and_reloads_on_demand():
     translator._model, translator._tokenizer = object(), object()
     translator._unload()
     assert translator._model is None and translator._tokenizer is None  # memory is freed; _load() fetches it again on next use
+
+
+# ---------------------------------------------------------------- regressions found on the real BIL and RMA documents
+
+def _evidence(ident, title, text, section="\u00a71"):
+    return {"id": ident, "title": title, "text": text, "section": section, "version_label": "v1", "document_id": title}
+
+
+def test_quotes_with_the_same_figure_are_not_a_conflict():
+    """R07: 'Nu. 300 million ... non-life' and 'Nu.300 million for each line' agree, whatever the wording."""
+    from app.agents.models import ConflictItem, ConflictOut
+    from app.agents.nodes import verified_conflicts
+
+    evidence = [_evidence("E1", "Insurance Rules", "the minimum paid-up capital shall be Nu. 300 million, for life or non-life business"),
+                _evidence("E2", "Licensing Rules", "Minimum paid up capital for each line of direct insurance business shall be Nu.300 million")]
+    same = ConflictOut(conflicts=[ConflictItem(topic="capital", evidence_id_a="E1", quote_a="Nu. 300 million", evidence_id_b="E2", quote_b="Nu.300 million")])
+    assert verified_conflicts(same, evidence) == []
+    differ = ConflictOut(conflicts=[ConflictItem(topic="capital", evidence_id_a="E1", quote_a="Nu. 300 million",
+                                                 evidence_id_b="E2", quote_b="each line of direct insurance business shall be Nu.300 million")])
+    assert verified_conflicts(differ, evidence) == []  # still the same figure inside longer words
+
+
+def test_each_documents_own_in_force_date_is_not_a_conflict():
+    """R08: two regulations each say when THEY come into force."""
+    from app.agents.models import ConflictItem, ConflictOut
+    from app.agents.nodes import verified_conflicts
+
+    evidence = [_evidence("E1", "Insurance Rules", "2.1 These Rules and Regulations shall: i. be called the Insurance Rules; ii. come into force with effect from 1st July 2018."),
+                _evidence("E2", "Licensing Rules", "2.1 These Rules and Regulations shall: i. be called the Licensing Rules; ii. come into force with effect from 18th July 2018.")]
+    out = ConflictOut(conflicts=[ConflictItem(topic="in-force date", evidence_id_a="E1", quote_a="come into force with effect from 1st July 2018",
+                                              evidence_id_b="E2", quote_b="come into force with effect from 18th July 2018")])
+    assert verified_conflicts(out, evidence) == []
+
+
+def test_a_real_numeric_conflict_between_documents_still_counts():
+    from app.agents.models import ConflictItem, ConflictOut
+    from app.agents.nodes import verified_conflicts
+
+    evidence = [_evidence("E1", "Handbook", "A claim must be reported within 7 days of the loss."),
+                _evidence("E2", "Circular", "Motor claims must be reported within 14 days of the loss.")]
+    out = ConflictOut(conflicts=[ConflictItem(topic="reporting period", evidence_id_a="E1", quote_a="within 7 days", evidence_id_b="E2", quote_b="within 14 days")])
+    assert len(verified_conflicts(out, evidence)) == 1
+
+
+def test_a_passage_with_a_rare_word_from_the_question_survives_a_poor_selection():
+    """R01: the selector kept the overview and dropped the 'Coverage' list that actually says flood."""
+    from app.agents.nodes import _with_distinctive_passages
+
+    evidence = [_evidence("E1", "Comprehensive", "Comprehensive motor insurance offers coverage for natural disasters and theft."),
+                _evidence("E2", "Comprehensive", "Coverage: accidental; Flood, typhoon, storm, inundation; landslide."),
+                _evidence("E3", "Comprehensive", "Exclusion: consequential loss and depreciation."),
+                _evidence("E4", "Third party", "Third party motor insurance is mandatory."),
+                _evidence("E5", "Handbook", "Motor insurance policy lasts one year.")]
+    kept = _with_distinctive_passages("Does BIL's comprehensive motor insurance cover flood damage?", [evidence[0]], evidence)
+    assert [e["id"] for e in kept] == ["E1", "E2"]  # "flood" is rare so E2 returns; "motor" and "comprehensive" are everywhere, so they add nothing

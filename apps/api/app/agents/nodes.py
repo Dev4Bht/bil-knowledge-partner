@@ -19,7 +19,7 @@ from ..models import BusinessLineCode, DocumentVersion, User, VersionStatus
 from ..search import Hit, hybrid_search
 from . import prompts
 from .llm import LLM, LLMBadOutput, LLMUnavailable
-from .models import ConflictOut, EntailOut, JudgeOut, Plan, ReplyOut, SynthOut, schema_for
+from .models import AdjudicateOut, ConflictOut, EntailOut, JudgeOut, Plan, ReplyOut, SelectOut, SynthOut, schema_for
 from .translate import DZ, EN, Translator, is_degenerate, tibetan_share, western_digits
 
 TIBETAN = re.compile(r"[\u0F00-\u0FFF]")
@@ -140,6 +140,17 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().casefold()
 
 
+_SELF_REFERENCE = re.compile(r"\b(these|this)\s+(rules?(\s+and\s+regulations?)?|regulations?|guidelines?|act|directive|circular|policy|manual|document)\b", re.I)
+
+
+def _about_itself(passage: str, quote_norm: str) -> bool:
+    """True when the quoted words sit in a sentence about 'these Rules', 'this circular' and so on, i.e. a property of
+    the document itself (for example its in-force date), which another document's own date cannot contradict."""
+    flat = _norm(passage)
+    at = flat.find(quote_norm)
+    return at >= 0 and bool(_SELF_REFERENCE.search(flat[max(0, at - 160): at + len(quote_norm) + 40]))
+
+
 def verified_conflicts(out: ConflictOut, evidence: list[dict]) -> list[dict]:
     """Keep only conflicts the code can prove: both quotes really appear in their own passages, the passages come from
     different documents, and the quoted words actually differ. The model proposes; deterministic checks decide."""
@@ -156,11 +167,33 @@ def verified_conflicts(out: ConflictOut, evidence: list[dict]) -> list[dict]:
             continue  # a quote that is not in the passage is invented
         if qa == qb or qa in qb or qb in qa:
             continue  # the same words, or one merely more detailed than the other
-        found.append({"evidence_ids": [a["id"], b["id"]],
+        figures_a, figures_b = _numbers(item.quote_a), _numbers(item.quote_b)
+        if figures_a and figures_b and figures_a == figures_b:
+            continue  # worded differently but stating the same figures: not a conflict
+        if _about_itself(a["text"], qa) and _about_itself(b["text"], qb):
+            continue  # each document is stating its OWN date, scope or status
+        found.append({"evidence_ids": [a["id"], b["id"]], "quotes": {a["id"]: item.quote_a.strip(), b["id"]: item.quote_b.strip()},
                       "description": f"on {item.topic.strip() or 'the same point'}, {a['title']} ({a['section'] or a['version_label']}) says "
                                      f"\u201c{item.quote_a.strip()}\u201d while {b['title']} ({b['section'] or b['version_label']}) says "
                                      f"\u201c{item.quote_b.strip()}\u201d"})
     return found
+
+
+def adjudicated(ctx: Ctx, question: str, candidates: list[dict], evidence: list[dict]) -> list[dict]:
+    """A second, narrow question for each candidate: are the two quotes about the SAME thing? Anything the model
+    cannot confirm is dropped, because a wrong 'conflict' blocks a correct answer."""
+    by_id = {e["id"]: e for e in evidence}
+    kept = []
+    for candidate in candidates:
+        a, b = (by_id[i] for i in candidate["evidence_ids"])
+        prompt = (f"Staff question: {question}\n\nPassage A ({a['title']}, {a['section'] or a['version_label']}):\n{a['text'][:700]}\n\n"
+                  f"Passage B ({b['title']}, {b['section'] or b['version_label']}):\n{b['text'][:700]}\n\nThe values that differ: {candidate['description']}")
+        try:
+            if _structured(ctx, AdjudicateOut, prompts.ADJUDICATE, prompt, 200).same_subject:
+                kept.append(candidate)
+        except (LLMUnavailable, LLMBadOutput):
+            continue
+    return kept
 
 
 # ------------------------------------------------------------------ 3. Policy and version
@@ -192,7 +225,7 @@ def policy_version(state: dict, ctx: Ctx) -> dict:
         try:
             out = _structured(ctx, ConflictOut, prompts.CONFLICT,
                               f"Staff question: {state['question']}\n\n{prompts.render_evidence(evidence)}", 500)
-            conflicts = verified_conflicts(out, evidence)
+            conflicts = adjudicated(ctx, state["question"], verified_conflicts(out, evidence), evidence)
         except (LLMUnavailable, LLMBadOutput):
             pass
     for c in conflicts:
@@ -205,17 +238,62 @@ def policy_version(state: dict, ctx: Ctx) -> dict:
 
 # ------------------------------------------------------------------ 4. Knowledge synthesis
 
+_QUESTION_STOP = set("does what which when where whether would could should about under with that this from into have your their they them "
+                     "there then than also only over after before between each other many much must need needs".split())
+
+
+def _with_distinctive_passages(question: str, picked: list[dict], evidence: list[dict], limit: int = 6) -> list[dict]:
+    """A safety net around the model's choice: a passage that contains a rare word from the question (such as "flood")
+    is kept even if the selector left it out. Words found in most passages (such as "motor") do not count."""
+    terms = {t for t in re.findall(r"[a-z]{4,}", question.lower()) if t not in _QUESTION_STOP}
+    ordered = list(picked)
+    taken = {e["id"] for e in picked}
+    for term in sorted(terms):
+        holders = [e for e in evidence if term in e["text"].lower()]
+        if 0 < len(holders) <= max(1, len(evidence) // 2):  # distinctive: not in most of the passages
+            for e in holders:
+                if e["id"] not in taken and len(ordered) < limit:
+                    ordered.append(e)
+                    taken.add(e["id"])
+    return ordered
+
+
+def _conflict_claims(state: dict) -> dict:
+    """When documents genuinely disagree the write-up is built from the verified quotes themselves, with no model
+    in the loop: each side is stated exactly as the document says it, with its own citation."""
+    by_id = {e["id"]: e for e in state["evidence"]}
+    claims = []
+    for conflict in state["conflicts"]:
+        for evidence_id in conflict["evidence_ids"]:
+            e = by_id[evidence_id]
+            quote = conflict.get("quotes", {}).get(evidence_id)
+            if quote:
+                claims.append({"text": f"Conflict: {e['title']} ({e['section'] or e['version_label']}) says \u201c{quote}\u201d.", "evidence_ids": [evidence_id]})
+    return {"answerable": bool(claims), "claims": claims, "missing_info": None}
+
+
 def synthesis(state: dict, ctx: Ctx) -> dict:
     started = time.monotonic()
-    hint = ""
     if state.get("conflicts"):
-        hint = ("A reviewer step found that these passages disagree: "
-                + "; ".join(f"{', '.join(c['evidence_ids'])}: {c['description']}" for c in state["conflicts"])
-                + ". Follow rule 5.\n\n")
-    prompt = f"Staff question: {state['question']}\n\n{hint}{prompts.render_evidence(state['evidence'])}"
+        synth = _conflict_claims(state)
+        return {"synth": synth, "steps": _step("Synthesis", f"{len(synth['claims'])} conflicting statement(s) quoted from the documents", started)}
+
+    evidence = state["evidence"]
+    narrowed = evidence
+    try:  # keep only the passages that help answer; fall back to everything if the choice is unusable
+        listing = "\n".join(f"{e['id']} [{e['title']}, {e['section'] or e['version_label']}]: {e['text'][:260].replace(chr(10), ' ')}" for e in evidence)
+        chosen = _structured(ctx, SelectOut, prompts.SELECT, f"Staff question: {state['question']}\n\nPassages:\n{listing}", 120).relevant_ids
+        picked = [e for e in evidence if e["id"] in set(chosen)]
+        if picked:
+            narrowed = _with_distinctive_passages(state["question"], picked, evidence)
+    except LLMUnavailable:
+        return {"llm_down": True, "synth": None, "steps": _step("Synthesis", "language model unavailable", started)}
+    except LLMBadOutput:
+        pass
+    prompt = f"Staff question: {state['question']}\n\n{prompts.render_evidence(narrowed)}"
     try:
-        synth = _structured(ctx, SynthOut, prompts.SYNTHESIS, prompt, 900).model_dump()
-        summary = f"{len(synth['claims'])} claim(s) drafted from the evidence"
+        synth = _structured(ctx, SynthOut, prompts.SYNTHESIS, prompt, 1500).model_dump()
+        summary = f"{len(synth['claims'])} claim(s) drafted from {len(narrowed)} of {len(evidence)} passage(s)"
     except LLMUnavailable:
         return {"llm_down": True, "synth": None, "steps": _step("Synthesis", "language model unavailable", started)}
     except LLMBadOutput:
@@ -254,7 +332,8 @@ def verifier(state: dict, ctx: Ctx) -> dict:
             version = ctx.db.get(DocumentVersion, evidence[i]["version_id"])
             if version is None or not access.can_see_document(ctx.user, version.document) or version.status not in allowed:
                 permitted = False
-        cited_numbers = set().union(*(_numbers(evidence[i]["text"]) for i in ids))
+        # a claim may quote figures from the passage, or name its source (a title such as "Circular 2024/017", a section number)
+        cited_numbers = set().union(*(_numbers(" ".join([evidence[i]["text"], evidence[i]["title"], evidence[i]["section"] or "", evidence[i]["version_label"]])) for i in ids))
         if not permitted or not _numbers(text) <= cited_numbers:  # a number the passages do not contain is a hallucination
             unsupported.append(text)
             continue

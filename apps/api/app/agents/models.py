@@ -71,3 +71,13 @@ def schema_for(model: type[BaseModel]) -> dict:
         return node
 
     return inline(schema)
+
+
+class SelectOut(BaseModel):
+    relevant_ids: list[str] = Field(default_factory=list)
+
+
+class AdjudicateOut(BaseModel):
+    subject_a: str = ""   # field order matters: the model must say what each value is about BEFORE it decides
+    subject_b: str = ""
+    same_subject: bool
