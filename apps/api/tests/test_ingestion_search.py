@@ -171,38 +171,43 @@ def test_real_bge_m3_finds_flood_when_the_question_says_natural_calamity(db, sto
     assert hits[0].title == "Motor Insurance Handbook" and hits[0].section_label == "4.1"
 
 
-def _add_text_doc(client, folder_id, title, text):
-    created = upload(client, folder_id, title=title, content=(text + "\n").encode(), filename=f"{title}.txt")
+def test_vector_agreement_outweighs_a_noisy_keyword_ranking():
+    """The real R01/R05/R10 failures: the keyword list ranked the right passage far down while the vector list ranked
+    it first. An equal vote let a crowd of keyword-only passages push it out of the top 8."""
+    import uuid
+
+    from app.search import KEYWORD_WEIGHT, VECTOR_WEIGHT, fuse_rankings
+
+    right, noisy = uuid.uuid4(), uuid.uuid4()
+    keyword = [noisy]                                            # keyword's top pick is a weak match
+    vector = [right, *[uuid.uuid4() for _ in range(28)], noisy]  # vector: right passage first, the weak one 30th
+
+    def position(weights):
+        fused = fuse_rankings([(keyword, weights[0]), (vector, weights[1])])
+        return sorted(fused, key=fused.get, reverse=True).index(right)
+
+    assert position((KEYWORD_WEIGHT, VECTOR_WEIGHT)) == 0
+    assert position((1.0, 1.0)) == 1  # an equal vote lets the keyword-led passage ahead of it
+
+
+def test_a_passage_found_by_both_rankings_beats_one_found_by_either():
+    import uuid
+
+    from app.search import fuse_rankings
+
+    both, only_vector, only_keyword = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    fused = fuse_rankings([([only_keyword, both], 1.0), ([only_vector, both], 4.0)])
+    assert max(fused, key=fused.get) == both
+
+
+def test_keyword_still_finds_exact_terms_when_the_vector_has_nothing_close(db, store, client_for, folders):
+    """Exact codes and clause numbers are what the keyword vote is for."""
+    admin = client_for("admin")
+    created = upload(admin, folders["general_insurance/Handbooks"], title="Code list",
+                     content=b"## Codes\nThe form code is ZX4410 for hail events.\n", filename="codes.txt")
     assert created.status_code == 201, created.text
     document = created.json()
-    assert client.post(f"/documents/{document['id']}/versions/{document['versions'][0]['id']}/approve").status_code == 200
-
-
-def test_a_rare_word_in_the_question_is_not_drowned_out_by_common_words(db, store, client_for, folders):
-    """The real R01 failure: 'flood' appears in a handful of passages but 'motor insurance cover' in hundreds, so a
-    passage that merely repeats the common words outranked the short list that actually says 'Flood'."""
-    admin = client_for("admin")
-    folder = folders["general_insurance/Handbooks"]
-    for n in range(14):  # many passages stuffed with the question's common words
-        _add_text_doc(admin, folder, f"Motor overview {n}",
-                      f"## Motor insurance cover {n}\nMotor insurance cover applies to a motor vehicle. Motor insurance policy cover and motor insurance rules {n}.")
-    _add_text_doc(admin, folder, "Comprehensive coverage list", "## Coverage\n- Accidental\n- Flood, typhoon, hurricane, storm\n- Burglary or theft")
+    assert admin.post(f"/documents/{document['id']}/versions/{document['versions'][0]['id']}/approve").status_code == 200
     index_all(db, store)
-    hits, _ = search(db, user_named(db, "admin@test.bil"), "Does motor insurance cover flood damage?", limit=3)
-    assert "Comprehensive coverage list" in [h.title for h in hits]  # the passage with the rare word is in the top three
-
-
-def test_common_question_words_do_not_get_their_own_ranking(db, store, client_for, folders):
-    from app.search import rare_terms
-
-    admin = client_for("admin", email="admin2@test.bil")
-    folder = folders["general_insurance/Handbooks"]
-    for n in range(40):
-        _add_text_doc(admin, folder, f"Doc {n}", f"## Section {n}\nInsurance policy cover applies. Insurance rules {n}.")
-    _add_text_doc(admin, folder, "Special", "## Special\nA hailstorm rider is available.")
-    index_all(db, store)
-    from app.search import eligible_versions
-
-    ids = list(eligible_versions(db, user_named(db, "admin2@test.bil"), business_line=None, include_history=False))
-    terms = rare_terms(db, ids, "Does insurance cover a hailstorm rider?")
-    assert "hailstorm" in terms and "insurance" not in terms and "cover" not in terms
+    hits, _ = search(db, user_named(db, "admin@test.bil"), "ZX4410", limit=3)
+    assert hits and hits[0].title == "Code list"
