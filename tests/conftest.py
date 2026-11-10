@@ -2,6 +2,8 @@ import pytest
 
 from bil.config import Settings
 from bil.dms.db import init_db, make_engine, make_session_factory
+from bil.dms.models import Role, User
+from bil.dms.services.folders import get_or_create_group
 
 
 @pytest.fixture
@@ -17,3 +19,20 @@ def session(settings):
     with make_session_factory(engine)() as s:
         yield s
     engine.dispose()
+
+
+@pytest.fixture
+def make_user(session):
+    def _make(username, role=Role.staff, groups=()):
+        group_objs = [get_or_create_group(session, name) for name in groups]
+        user = User(username=username, full_name=username.title(), password_hash="x", role=role, groups=group_objs)
+        session.add(user)
+        session.commit()
+        return user
+
+    return _make
+
+
+@pytest.fixture
+def admin(make_user):
+    return make_user("admin", Role.admin)
