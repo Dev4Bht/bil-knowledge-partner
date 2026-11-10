@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { formatDate, relativeTime, cn } from "@/lib/format";
+import { CLASSIFICATION_LABEL, formatDate, relativeTime, cn } from "@/lib/format";
 import type { DocumentSummary } from "@/lib/types";
-import { ClassificationBadge, DemoBadge, StatusBadge, Badge } from "@/components/ui/badge";
+import { ClassificationBadge, DemoBadge, StatusMark, Badge } from "@/components/ui/badge";
 import { IconClock } from "@/components/ui/icons";
 
 export type SortKey = "updated" | "title" | "effective";
@@ -33,7 +33,7 @@ function SortHeader({ label, sortKey, sort, onSort, className }: { label: string
 
 export function DocumentTable({ items, sort, onSort }: { items: DocumentSummary[]; sort: SortKey; onSort: (s: SortKey) => void }) {
   return (
-    <div className="overflow-hidden rounded-[12px] border border-line bg-surface shadow-[var(--shadow-card)]">
+    <div className="overflow-hidden rounded-[10px] border border-line bg-surface">
       <table className="w-full border-collapse text-[14px]">
         <caption className="sr-only">Documents. Sorted by {sort === "title" ? "title" : sort === "effective" ? "effective date" : "last updated"}.</caption>
         <thead className="hidden border-b border-line bg-surface-2 text-[12px] md:table-header-group">
@@ -62,19 +62,19 @@ export function DocumentTable({ items, sort, onSort }: { items: DocumentSummary[
                   </div>
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[13px] text-muted">
                     <span className="truncate">{doc.business_line.name} / {doc.folder.path}</span>
-                    <span className="hidden md:inline-flex min-[1500px]:hidden"><ClassificationBadge value={doc.access_classification} /></span>
+                    {doc.access_classification === "restricted" && <span className="hidden md:inline-flex"><ClassificationBadge value={doc.access_classification} /></span>}
                   </p>
                   {/* On phones the table columns collapse into this summary line. */}
                   <div className="mt-2 flex flex-wrap items-center gap-2 md:hidden">
-                    {shown && <StatusBadge status={shown.status} />}
+                    {shown && <StatusMark status={shown.status} />}
                     {shown && <span className="text-[13px] font-semibold text-ink">{shown.version_label}</span>}
-                    <ClassificationBadge value={doc.access_classification} />
+                    {doc.access_classification === "restricted" && <ClassificationBadge value={doc.access_classification} />}
                     <span className="text-[13px] text-muted">Updated {relativeTime(doc.updated_at)}</span>
                   </div>
                 </td>
                 <td className="hidden px-3 py-3.5 md:table-cell">
                   <div className="flex flex-col items-start gap-1">
-                    {shown ? <StatusBadge status={shown.status} /> : <Badge>No version</Badge>}
+                    {shown ? <StatusMark status={shown.status} /> : <Badge>No version</Badge>}
                     {pendingDraft && (
                       <Badge tone="warn" icon={<IconClock size={12} />}>
                         Draft pending: {pendingDraft.version_label}
@@ -83,12 +83,12 @@ export function DocumentTable({ items, sort, onSort }: { items: DocumentSummary[
                   </div>
                 </td>
                 <td className="hidden px-3 py-3.5 md:table-cell">
-                  <span className="font-semibold text-ink">{shown?.version_label ?? "None"}</span>
+                  <span className="block max-w-[11rem] truncate font-semibold text-ink" title={shown?.version_label}>{shown?.version_label ?? "None"}</span>
                   <span className="block text-[12px] text-muted">{doc.version_count} {doc.version_count === 1 ? "version" : "versions"}</span>
                 </td>
-                <td className="tabular hidden px-3 py-3.5 text-ink md:table-cell">{formatDate(shown?.effective_from)}</td>
-                <td className="hidden px-3 py-3.5 min-[1500px]:table-cell"><ClassificationBadge value={doc.access_classification} /></td>
-                <td className="hidden px-3 py-3.5 text-ink min-[1500px]:table-cell">{doc.owner ?? "Not set"}</td>
+                <td className="tabular hidden whitespace-nowrap px-3 py-3.5 text-ink md:table-cell">{shown?.effective_from ? formatDate(shown.effective_from) : <span className="text-muted" aria-label="Not set">&mdash;</span>}</td>
+                <td className="hidden px-3 py-3.5 text-[13px] text-muted min-[1500px]:table-cell">{doc.access_classification === "restricted" ? <ClassificationBadge value={doc.access_classification} /> : CLASSIFICATION_LABEL[doc.access_classification]}</td>
+                <td className="hidden px-3 py-3.5 text-ink min-[1500px]:table-cell">{doc.owner ?? <span className="text-muted" aria-label="Not set">&mdash;</span>}</td>
                 <td className="hidden whitespace-nowrap px-3 py-3.5 text-muted md:table-cell">{relativeTime(doc.updated_at)}</td>
               </tr>
             );
@@ -101,7 +101,7 @@ export function DocumentTable({ items, sort, onSort }: { items: DocumentSummary[
 
 export function DocumentTableSkeleton() {
   return (
-    <div className="overflow-hidden rounded-[12px] border border-line bg-surface" aria-hidden="true">
+    <div className="overflow-hidden rounded-[10px] border border-line bg-surface" aria-hidden="true">
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex items-center gap-4 border-b border-line px-4 py-4 last:border-b-0">
           <div className="flex-1 space-y-2">

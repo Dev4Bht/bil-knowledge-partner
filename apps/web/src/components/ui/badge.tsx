@@ -25,7 +25,7 @@ export function Badge({ tone = "neutral", icon, children, className, title }: {
     <span
       title={title}
       className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-[12px] font-semibold leading-5",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-[4px] border px-1.5 py-px text-[12px] font-medium leading-5",
         TONES[tone],
         className,
       )}
@@ -66,5 +66,16 @@ export function ClassificationBadge({ value }: { value: AccessClassification }) 
     <Badge tone={value === "restricted" ? "bad" : value === "staff" ? "info" : "neutral"} icon={value === "restricted" ? <IconLock size={13} /> : undefined}>
       {CLASSIFICATION_LABEL[value]}
     </Badge>
+  );
+}
+
+/** The normal state is shown quietly; only exceptions (draft, superseded, archived) get a tag. */
+export function StatusMark({ status }: { status: VersionStatus }) {
+  if (status !== "approved_current") return <StatusBadge status={status} />;
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ok">
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-ok" />
+      {STATUS_LABEL[status]}
+    </span>
   );
 }

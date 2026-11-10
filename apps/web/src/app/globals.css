@@ -36,8 +36,8 @@
   --bad-soft: #f8e3e0;
   --info: #2f4170;
   --info-soft: #e5eaf6;
-  --shadow-sm: 0 1px 2px rgb(27 42 78 / 0.06), 0 1px 1px rgb(27 42 78 / 0.04);
-  --shadow-md: 0 4px 14px rgb(27 42 78 / 0.09), 0 1px 3px rgb(27 42 78 / 0.06);
+  --shadow-sm: 0 1px 0 rgb(27 42 78 / 0.04);
+  --shadow-md: 0 6px 18px rgb(27 42 78 / 0.08), 0 1px 2px rgb(27 42 78 / 0.05);
   --shadow-lg: 0 18px 48px rgb(15 22 48 / 0.28);
   --scrim: rgb(15 22 48 / 0.5);
   --diff-add: #dff2e6;

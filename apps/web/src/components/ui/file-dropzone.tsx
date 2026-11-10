@@ -41,7 +41,7 @@ export function FileDropzone({ file, onFile, error, disabled }: { file: File | n
         onDrop={onDrop}
         data-dragging={dragging || undefined}
         className={cn(
-          "relative flex flex-col items-center justify-center gap-2 rounded-[12px] border-2 border-dashed px-4 py-7 text-center transition-colors focus-within:border-gold",
+          "relative flex flex-col items-center justify-center gap-2 rounded-[10px] border-2 border-dashed px-4 py-7 text-center transition-colors focus-within:border-gold",
           dragging ? "border-gold bg-gold-soft" : "border-line-strong bg-surface-2",
           error && "border-bad",
         )}
@@ -54,7 +54,7 @@ export function FileDropzone({ file, onFile, error, disabled }: { file: File | n
         </p>
         <label
           htmlFor={inputId}
-          className="inline-flex min-h-11 cursor-pointer items-center rounded-[8px] border border-line-strong bg-surface px-4 text-[15px] font-semibold text-ink hover:bg-surface-3 has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-gold md:min-h-10"
+          className="inline-flex min-h-11 cursor-pointer items-center rounded-[6px] border border-line-strong bg-surface px-4 text-[15px] font-semibold text-ink hover:bg-surface-3 has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-gold md:min-h-10"
         >
           Browse files
           <input

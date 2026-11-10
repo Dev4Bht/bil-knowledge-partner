@@ -52,7 +52,7 @@ export function DraftCard({ drafts, notes = [], preferred = "en", idPrefix }: { 
         {(["en", "dzo"] as Lang[]).map((lang) => (
           <TabPanel key={lang} id={lang} idPrefix={`${idPrefix}-draft`} active={tab === lang} className="mt-4 outline-none">
             {lang === "dzo" && (
-              <p className="mb-3 inline-flex items-center gap-2 rounded-[8px] border border-warn/45 bg-warn-soft px-3 py-1.5 text-[14px] font-semibold text-warn" data-testid="dz-label">
+              <p className="mb-3 inline-flex items-center gap-2 rounded-[6px] border border-warn/45 bg-warn-soft px-3 py-1.5 text-[14px] font-semibold text-warn" data-testid="dz-label">
                 {DZONGKHA_LABEL}
               </p>
             )}

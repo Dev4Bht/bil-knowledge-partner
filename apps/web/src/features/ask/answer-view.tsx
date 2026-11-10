@@ -54,7 +54,7 @@ function Steps({ response, idPrefix }: { response: AskResponse; idPrefix: string
   const [open, setOpen] = useState(false);
   if (response.steps.length === 0) return null;
   return (
-    <div className="rounded-[12px] border border-line bg-surface">
+    <div className="rounded-[10px] border border-line bg-surface">
       <button
         type="button"
         aria-expanded={open}

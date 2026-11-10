@@ -205,9 +205,9 @@ export function AskPage() {
           )}
           {caps.data && !canAsk && (mode === "ask" || !readiness.search) && <CapabilityNotice caps={caps.data} />}
 
-          {!wide && <details className="rounded-[12px] border border-line bg-surface"><summary className="flex min-h-11 cursor-pointer items-center px-4 text-[15px] font-semibold">Filters</summary><div className="p-3 pt-0">{filtersPanel}</div></details>}
+          {!wide && <details className="rounded-[10px] border border-line bg-surface"><summary className="flex min-h-11 cursor-pointer items-center px-4 text-[15px] font-semibold">Filters</summary><div className="p-3 pt-0">{filtersPanel}</div></details>}
 
-          <form onSubmit={submit} className="space-y-3 rounded-[14px] border border-line bg-surface p-4 shadow-[var(--shadow-md)]" aria-describedby={!canAsk && caps.data ? "ask-disabled-why" : undefined}>
+          <form onSubmit={submit} className="space-y-3 rounded-[10px] border border-line bg-surface p-4 shadow-[var(--shadow-md)]" aria-describedby={!canAsk && caps.data ? "ask-disabled-why" : undefined}>
             <label htmlFor="question" className="text-[15px] font-semibold text-heading">
               {mode === "ask" ? "Your question" : "Search the approved documents"}
             </label>
@@ -239,7 +239,7 @@ export function AskPage() {
               {turns.map((turn, index) => (
                 <section key={turn.id} aria-label={`Question ${index + 1}`} className="space-y-3">
                   <div className="flex justify-end">
-                    <p className="max-w-[90%] rounded-[14px] rounded-br-sm bg-primary px-4 py-2.5 text-[16px] text-primary-ink">{turn.question}</p>
+                    <p className="max-w-[90%] rounded-[10px] rounded-br-sm bg-primary px-4 py-2.5 text-[16px] text-primary-ink">{turn.question}</p>
                   </div>
                   {turn.state === "loading" && (
                     <Thinking onCancel={() => cancel(turn.id)} />

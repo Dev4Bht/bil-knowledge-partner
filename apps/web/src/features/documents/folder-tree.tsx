@@ -109,7 +109,7 @@ export function FolderTree({ folders, selectedId, onSelect, businessLine }: {
         onClick={() => onSelect(null)}
         aria-pressed={selectedId === null}
         className={cn(
-          "mb-1 flex min-h-11 w-full items-center gap-2 rounded-[8px] px-2.5 text-[15px] font-semibold md:min-h-9",
+          "mb-1 flex min-h-11 w-full items-center gap-2 rounded-[6px] px-2.5 text-[15px] font-semibold md:min-h-9",
           selectedId === null ? "bg-info-soft text-heading" : "text-ink hover:bg-surface-3",
         )}
       >
@@ -139,7 +139,7 @@ export function FolderTree({ folders, selectedId, onSelect, businessLine }: {
                     onClick={() => onSelect(selected ? null : node.folder)}
                     style={{ paddingLeft: 8 + node.depth * 16 }}
                     className={cn(
-                      "flex min-h-11 cursor-pointer items-center gap-1.5 rounded-[8px] pr-2 text-[15px] md:min-h-9",
+                      "flex min-h-11 cursor-pointer items-center gap-1.5 rounded-[6px] pr-2 text-[15px] md:min-h-9",
                       selected ? "bg-info-soft font-semibold text-heading ring-1 ring-info/30" : "text-ink hover:bg-surface-3",
                     )}
                   >

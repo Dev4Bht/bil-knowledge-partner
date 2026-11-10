@@ -58,7 +58,7 @@ export function Tabs({ tabs, value, onChange, label, idPrefix, className, varian
               variant === "underline" &&
                 cn("-mb-px border-b-[3px]", selected ? "border-gold text-heading" : "border-transparent text-muted hover:text-ink"),
               variant === "pill" &&
-                cn("rounded-[8px]", selected ? "bg-surface text-heading shadow-[var(--shadow-sm)]" : "text-muted hover:text-ink"),
+                cn("rounded-[6px]", selected ? "bg-surface text-heading shadow-[var(--shadow-sm)]" : "text-muted hover:text-ink"),
             )}
           >
             {tab.icon}

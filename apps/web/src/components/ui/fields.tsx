@@ -3,7 +3,7 @@ import { cn } from "@/lib/format";
 import { IconChevronDown } from "./icons";
 
 const CONTROL =
-  "w-full rounded-[8px] border border-line-strong bg-surface px-3 text-[16px] text-ink placeholder:text-muted/80 transition-colors hover:border-navy-soft focus-visible:border-gold disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-bad";
+  "w-full rounded-[6px] border border-line-strong bg-surface px-3 text-[16px] text-ink placeholder:text-muted/80 transition-colors hover:border-navy-soft focus-visible:border-gold disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-bad";
 
 export function Field({ label, hint, error, children, className, htmlFor, optional }: {
   label: string;

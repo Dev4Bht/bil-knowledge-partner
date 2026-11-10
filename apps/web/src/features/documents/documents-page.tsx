@@ -120,7 +120,7 @@ export function DocumentsPage() {
             </span>
             <IconChevronDown size={16} className={foldersOpen ? "rotate-180" : ""} />
           </button>
-          <nav id="folder-panel" aria-label="Folders" className={`${foldersOpen ? "block" : "hidden"} rounded-[12px] border border-line bg-surface p-2 lg:block`}>
+          <nav id="folder-panel" aria-label="Folders" className={`${foldersOpen ? "block" : "hidden"} rounded-[10px] border border-line bg-surface p-2 lg:block`}>
             {foldersState.loading && !foldersState.data ? (
               <LoadingRegion label="Loading folders" className="space-y-2 p-2">
                 {[0, 1, 2, 3].map((i) => (

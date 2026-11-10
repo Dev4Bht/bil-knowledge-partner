@@ -48,7 +48,7 @@ describe("LoginScreen", () => {
   it("labels the demo accounts and fills them in on request", async () => {
     mockApi(ready);
     renderApp(<LoginScreen />);
-    expect(screen.getByText(/fictional demo data, not BIL policy/i)).toBeInTheDocument();
+    expect(screen.getByText(/public material from bil\.bt and rma\.org\.bt/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /staff@demo.bil.test/ }));
     expect(screen.getByLabelText("Email")).toHaveValue("staff@demo.bil.test");
     expect(screen.getByLabelText("Password")).toHaveValue(DEMO_PASSWORD);

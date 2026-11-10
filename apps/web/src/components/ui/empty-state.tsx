@@ -10,7 +10,7 @@ export function EmptyState({ icon, title, children, action, className, pattern =
   pattern?: boolean;
 }) {
   return (
-    <div className={cn("relative overflow-hidden rounded-[12px] border border-dashed border-line-strong bg-surface px-6 py-12 text-center", className)}>
+    <div className={cn("relative overflow-hidden rounded-[10px] border border-dashed border-line-strong bg-surface px-6 py-12 text-center", className)}>
       {pattern && <div aria-hidden="true" className="pattern-band absolute inset-x-0 top-0 h-3 opacity-60" />}
       {icon && (
         <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-gold-soft text-gold-ink">

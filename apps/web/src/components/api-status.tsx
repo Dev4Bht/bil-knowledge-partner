@@ -31,7 +31,7 @@ export function ApiStatus() {
   }, []);
 
   return (
-    <section aria-labelledby="status-heading" className="rounded-[12px] border border-line bg-surface p-4">
+    <section aria-labelledby="status-heading" className="rounded-[10px] border border-line bg-surface p-4">
       <h2 id="status-heading" className="text-[14px] font-semibold text-heading">
         System status
       </h2>

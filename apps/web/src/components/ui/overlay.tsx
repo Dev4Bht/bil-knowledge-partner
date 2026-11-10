@@ -86,7 +86,7 @@ function DialogInner({ onClose, title, description, children, footer, size, init
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
         className={cn(
-          "anim-sheet flex max-h-[92dvh] w-full flex-col rounded-t-[16px] border border-line bg-surface shadow-[var(--shadow-modal)] sm:rounded-[16px]",
+          "anim-sheet flex max-h-[92dvh] w-full flex-col rounded-t-[16px] border border-line bg-surface shadow-[var(--shadow-modal)] sm:rounded-[10px]",
           size === "sm" && "sm:max-w-md",
           size === "md" && "sm:max-w-xl",
           size === "lg" && "sm:max-w-3xl",

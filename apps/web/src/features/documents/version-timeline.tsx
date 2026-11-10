@@ -33,7 +33,7 @@ export function VersionTimeline({ versions, selectedId, onSelect, canManage, onA
             </span>
             <article
               className={cn(
-                "rounded-[12px] border bg-surface p-4 shadow-[var(--shadow-card)] transition-colors",
+                "rounded-[10px] border bg-surface p-4 shadow-[var(--shadow-card)] transition-colors",
                 selected ? "border-gold ring-1 ring-gold/50" : "border-line",
                 muted && "bg-surface-2",
               )}

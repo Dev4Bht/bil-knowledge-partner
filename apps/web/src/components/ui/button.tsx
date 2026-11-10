@@ -7,7 +7,7 @@ export type ButtonSize = "sm" | "md" | "lg";
 
 export function buttonClasses(variant: ButtonVariant = "secondary", size: ButtonSize = "md", extra?: string) {
   return cn(
-    "inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-[8px] font-semibold",
+    "inline-flex shrink-0 select-none items-center justify-center gap-2 whitespace-nowrap rounded-[6px] font-semibold",
     "transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-55 aria-disabled:cursor-not-allowed aria-disabled:opacity-55",
     size === "sm" && "min-h-9 px-3 text-[14px]",
     size === "md" && "min-h-11 px-4 text-[15px] md:min-h-10",
@@ -58,7 +58,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex size-11 items-center justify-center rounded-[8px] text-ink transition-colors hover:bg-surface-3 md:size-10",
+        "inline-flex size-11 items-center justify-center rounded-[6px] text-ink transition-colors hover:bg-surface-3 md:size-10",
         className,
       )}
       {...rest}

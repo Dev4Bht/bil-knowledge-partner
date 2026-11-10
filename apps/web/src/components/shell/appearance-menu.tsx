@@ -89,7 +89,7 @@ export function AppearanceMenu() {
           ref={panel}
           role="dialog"
           aria-label="Appearance"
-          className="anim-fade absolute right-0 top-[calc(100%+8px)] z-40 w-[min(92vw,22rem)] rounded-[14px] border border-line bg-surface p-4 shadow-pop"
+          className="anim-fade absolute right-0 top-[calc(100%+8px)] z-40 w-[min(92vw,22rem)] rounded-[10px] border border-line bg-surface p-4 shadow-pop"
         >
           <h2 className="text-[16px] font-semibold text-heading">Appearance</h2>
 
@@ -205,7 +205,7 @@ export function AppearanceMenu() {
                   aria-label="Pick a colour"
                   value={normalized ?? FALLBACK_CUSTOM}
                   onChange={(event) => chooseHex(event.target.value)}
-                  className="size-10 shrink-0 cursor-pointer rounded-[8px] border border-line bg-surface p-0.5"
+                  className="size-10 shrink-0 cursor-pointer rounded-[6px] border border-line bg-surface p-0.5"
                 />
                 <input
                   id={`${errorId}-hex`}
@@ -218,7 +218,7 @@ export function AppearanceMenu() {
                   onChange={(event) => chooseHex(event.target.value)}
                   aria-invalid={showError}
                   aria-describedby={showError ? errorId : undefined}
-                  className="h-10 min-w-0 flex-1 rounded-[8px] border border-line bg-surface px-3 font-mono text-[14px] text-ink"
+                  className="h-10 min-w-0 flex-1 rounded-[6px] border border-line bg-surface px-3 font-mono text-[14px] text-ink"
                 />
               </div>
               {showError && (

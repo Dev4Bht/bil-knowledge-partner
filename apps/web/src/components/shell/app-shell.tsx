@@ -107,10 +107,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="pattern-band h-10 opacity-40" aria-hidden="true" />
-        <p className="px-4 pb-4 pt-2 text-center text-[11px] leading-snug text-rail-muted lg:text-left">
-          <span className="hidden lg:inline">Hackathon 2026 prototype. Demo data is fictional.</span>
-          <span className="lg:hidden">Demo</span>
+        <p className="border-t border-white/10 px-4 py-3 text-center text-[11px] leading-snug text-rail-muted lg:text-left">
+          <span className="hidden lg:inline">Prototype. Public BIL and RMA documents; not BIL&rsquo;s internal versions.</span>
+          <span className="lg:hidden">Beta</span>
         </p>
       </aside>
 

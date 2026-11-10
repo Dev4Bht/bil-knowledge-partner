@@ -96,7 +96,7 @@ function PaletteInner({ onClose }: { onClose: () => void }) {
 
   return createPortal(
     <div className="anim-fade fixed inset-0 z-50 flex items-start justify-center bg-[var(--scrim)] p-3 pt-[10vh] sm:p-6 sm:pt-[12vh]" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div ref={ref} role="dialog" aria-modal="true" aria-label="Command palette" tabIndex={-1} className="anim-rise w-full max-w-xl overflow-hidden rounded-[16px] border border-line bg-surface shadow-[var(--shadow-modal)]">
+      <div ref={ref} role="dialog" aria-modal="true" aria-label="Command palette" tabIndex={-1} className="anim-rise w-full max-w-xl overflow-hidden rounded-[10px] border border-line bg-surface shadow-[var(--shadow-modal)]">
         <div className="flex items-center gap-3 border-b border-line px-4">
           <IconSearch size={20} className="text-muted" />
           <input

@@ -160,7 +160,7 @@ export function DocumentDetailPage({ documentId }: { documentId: string }) {
           />
         </section>
 
-        <section aria-label="Document content" className="min-w-0 rounded-[12px] border border-line bg-surface p-4 shadow-[var(--shadow-card)] sm:p-5">
+        <section aria-label="Document content" className="min-w-0 rounded-[10px] border border-line bg-surface p-4 shadow-[var(--shadow-card)] sm:p-5">
           <Tabs tabs={TABS} value={tab} onChange={setTab} label="Document views" idPrefix="doc" />
           <div className="pt-4">
             <TabPanel id="preview" idPrefix="doc" active={tab === "preview"} className="outline-none">

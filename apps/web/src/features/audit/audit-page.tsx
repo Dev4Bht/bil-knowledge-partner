@@ -85,7 +85,7 @@ function AuditTable() {
         </EmptyState>
       ) : (
         <div className={log.loading ? "opacity-60" : ""}>
-          <div className="overflow-hidden rounded-[12px] border border-line bg-surface shadow-[var(--shadow-card)]">
+          <div className="overflow-hidden rounded-[10px] border border-line bg-surface shadow-[var(--shadow-card)]">
             <table className="w-full border-collapse text-[14px]">
               <caption className="sr-only">Audit events, newest first</caption>
               <thead className="hidden border-b border-line bg-surface-2 text-[12px] uppercase tracking-wide text-muted md:table-header-group">

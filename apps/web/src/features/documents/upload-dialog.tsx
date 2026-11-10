@@ -211,7 +211,7 @@ function UploadForm({ onClose, target, onDone }: { onClose: () => void; target: 
                   <legend className="mb-1.5 text-[14px] font-semibold text-heading">Roles allowed</legend>
                   <div className="flex flex-wrap gap-2">
                     {ROLE_CHOICES.map((role) => (
-                      <label key={role} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-[8px] border border-line-strong bg-surface px-3 text-[15px] capitalize has-[:checked]:border-gold has-[:checked]:bg-gold-soft md:min-h-10">
+                      <label key={role} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-[6px] border border-line-strong bg-surface px-3 text-[15px] capitalize has-[:checked]:border-gold has-[:checked]:bg-gold-soft md:min-h-10">
                         <input
                           type="checkbox"
                           className="size-4 accent-[var(--navy-soft)]"

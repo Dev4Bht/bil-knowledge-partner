@@ -74,7 +74,7 @@ export function LayoutPreview() {
       <p className="text-[12px] font-bold uppercase tracking-wider text-muted">Layout preview. No content here is an answer.</p>
       <div className="grid gap-3 md:grid-cols-3">
         {frames.map((frame) => (
-          <div key={frame.title} className="relative overflow-hidden rounded-[12px] border border-dashed border-line-strong bg-surface p-4">
+          <div key={frame.title} className="relative overflow-hidden rounded-[10px] border border-dashed border-line-strong bg-surface p-4">
             <div aria-hidden="true" className="pattern-band absolute inset-x-0 top-0 h-2 opacity-60" />
             <h3 className="mt-1 font-display text-[17px] font-semibold">{frame.title}</h3>
             <p className="mt-1 text-[14px] text-muted">{frame.body}</p>

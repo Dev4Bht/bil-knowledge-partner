@@ -72,7 +72,7 @@ export function UserMenu() {
         <IconChevronDown size={16} className="hidden text-muted md:block" />
       </button>
       {open && (
-        <div className="anim-rise absolute right-0 top-full z-40 mt-2 w-72 rounded-[12px] border border-line bg-surface p-3 shadow-[var(--shadow-pop)]">
+        <div className="anim-rise absolute right-0 top-full z-40 mt-2 w-72 rounded-[10px] border border-line bg-surface p-3 shadow-[var(--shadow-pop)]">
           <p className="truncate text-[15px] font-semibold text-heading">{user.display_name}</p>
           <p className="truncate text-[13px] text-muted">{user.email}</p>
           <div className="mt-2">

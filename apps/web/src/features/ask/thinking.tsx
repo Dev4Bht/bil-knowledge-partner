@@ -19,7 +19,7 @@ export function Thinking({ onCancel }: { onCancel: () => void }) {
   }, []);
   const pulse = seconds % AGENT_STAGES.length;
   return (
-    <LoadingRegion label={`Reading the approved documents. ${seconds} seconds so far.`} className="space-y-3 rounded-[12px] border border-line bg-surface p-5">
+    <LoadingRegion label={`Reading the approved documents. ${seconds} seconds so far.`} className="space-y-3 rounded-[10px] border border-line bg-surface p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[15px] font-semibold text-heading" aria-hidden="true">
           Reading the approved documents
@@ -34,7 +34,7 @@ export function Thinking({ onCancel }: { onCancel: () => void }) {
       </p>
       <ol className="grid gap-1.5 sm:grid-cols-2" aria-hidden="true">
         {AGENT_STAGES.map((agent, i) => (
-          <li key={agent} className="flex items-center gap-2.5 rounded-[8px] bg-surface-2 px-3 py-2 text-[14px]">
+          <li key={agent} className="flex items-center gap-2.5 rounded-[6px] bg-surface-2 px-3 py-2 text-[14px]">
             <span className={`size-2.5 shrink-0 rounded-full transition-colors duration-300 ${i === pulse ? "bg-gold" : "bg-line-strong"}`} />
             <span className="text-muted">{i + 1}.</span>
             <span className="font-semibold text-ink">{agent}</span>
