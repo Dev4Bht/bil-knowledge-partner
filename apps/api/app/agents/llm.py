@@ -27,7 +27,7 @@ class OllamaLLM:
 
     def _chat(self, system: str, user: str, max_tokens: int, schema: dict | None) -> str:
         payload = {
-            "model": self.model, "stream": False, "think": False,  # no hidden reasoning: faster, and nothing to leak
+            "model": self.model, "stream": False, "think": False, "keep_alive": "90s",  # free the memory soon after use  # no hidden reasoning: faster, and nothing to leak
             "options": {"temperature": 0, "num_predict": max_tokens, "num_ctx": 8192},
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
         }

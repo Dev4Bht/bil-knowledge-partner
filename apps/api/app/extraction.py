@@ -76,9 +76,15 @@ class ChunkData:
     quality: str = "ok"  # "ok" | "needs_review"
 
 
+_MARKDOWN_HEADING = re.compile(r"^#{1,4}\s+(\S.{0,119})$")
+
+
 def _match_heading(text: str) -> tuple[str | None, str] | None:
-    """Return (label, title) if the line looks like a numbered or 'Step N.' heading."""
+    """Return (label, title) if the line looks like a heading: '## Title', '4.1 Title', '1. Title' or 'Step 2. Title'."""
     stripped = text.strip()
+    markdown = _MARKDOWN_HEADING.match(stripped)
+    if markdown:  # used for text copies of web pages, where headings are marked with '#'
+        return None, markdown.group(1).strip()
     if len(stripped) > 100 or stripped.endswith("."):
         return None
     match = _HEADING.match(stripped)

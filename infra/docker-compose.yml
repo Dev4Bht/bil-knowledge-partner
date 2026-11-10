@@ -54,6 +54,7 @@ services:
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3470}
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       SEED_DEMO: ${SEED_DEMO:-false}
+      SEED_FIXTURES: ${SEED_FIXTURES:-false}
       DEMO_PASSWORD: ${DEMO_PASSWORD:-}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}

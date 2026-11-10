@@ -361,3 +361,12 @@ def test_real_model_answers_the_flood_question_with_the_right_citation(seeded, t
     assert result.status == "answered", (result.status, result.abstention_reason, result.unsupported_claims)
     assert any(c.title == "Motor Insurance Handbook" and c.section == "§4.1 Flood damage" for c in result.citations)
     assert all(c.version_status.value == "approved_current" for c in result.citations)
+
+
+def test_translation_model_is_released_when_idle_and_reloads_on_demand():
+    from app.agents.translate import NllbTranslator
+
+    translator = NllbTranslator()
+    translator._model, translator._tokenizer = object(), object()
+    translator._unload()
+    assert translator._model is None and translator._tokenizer is None  # memory is freed; _load() fetches it again on next use

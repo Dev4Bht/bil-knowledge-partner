@@ -19,7 +19,7 @@ from ..storage import ObjectStore
 
 MAX_ATTEMPTS = 3
 STALE_AFTER = timedelta(minutes=10)
-EMBED_BATCH = 16
+EMBED_BATCH = 8  # smaller batches keep CPU/GPU bursts short; the vectors are identical
 
 
 def enqueue(db: Session, version_id: uuid.UUID) -> IngestionJob:

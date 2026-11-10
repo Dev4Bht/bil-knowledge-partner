@@ -52,7 +52,7 @@ def demo_allowed(settings: Settings) -> bool:
     return settings.seed_demo and settings.app_env != "production" and bool(settings.demo_password)
 
 
-def seed_demo(db: Session, store: ObjectStore, settings: Settings) -> None:
+def seed_demo(db: Session, store: ObjectStore, settings: Settings, *, fixtures: bool = True) -> None:
     if not demo_allowed(settings):
         raise RuntimeError("Demo seeding needs SEED_DEMO=true, DEMO_PASSWORD set, and APP_ENV not production")
     for email, display_name, role_name in DEMO_USERS:
@@ -61,6 +61,8 @@ def seed_demo(db: Session, store: ObjectStore, settings: Settings) -> None:
             db.add(User(email=email, display_name=display_name, password_hash=hash_password(settings.demo_password),
                         roles=[role]))
     db.commit()
+    if not fixtures:
+        return
     admin = db.execute(select(User).where(User.email == "admin@demo.bil.test")).scalar_one()
 
     max_bytes = settings.max_upload_mb * 1024 * 1024
@@ -100,8 +102,8 @@ def main() -> None:
         ensure_base_data(db)
         print("Base data ready (roles, business lines, folders)")
         if demo_allowed(settings):
-            seed_demo(db, build_object_store(settings), settings)
-            print("Demo accounts and fictional fixtures ready")
+            seed_demo(db, build_object_store(settings), settings, fixtures=settings.seed_fixtures)
+            print("Demo accounts ready" + (" and fictional fixtures loaded" if settings.seed_fixtures else " (no fictional documents)"))
         else:
             print("Demo seeding skipped")
 

@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
         indexer = start_in_background(settings) if settings.run_worker else None
-        if settings.translation_enabled and settings.run_worker:  # load the Dzongkha model in the background, not on first request
+        if settings.translation_enabled and settings.translation_warmup and settings.run_worker:  # optional: preload the Dzongkha model
             import threading
 
             from .agents.translate import get_nllb

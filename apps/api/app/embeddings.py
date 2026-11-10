@@ -26,7 +26,7 @@ class OllamaEmbedder:
             return []
         try:
             response = httpx.post(f"{self.base_url}/api/embed", timeout=self.timeout,
-                                  json={"model": self.model, "input": texts, "truncate": True})
+                                  json={"model": self.model, "input": texts, "truncate": True, "keep_alive": "90s"})
             response.raise_for_status()
             vectors = response.json()["embeddings"]
         except Exception as exc:

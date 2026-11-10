@@ -109,3 +109,10 @@ def test_short_sections_become_single_chunks_with_offsets():
     flood = next(c for c in chunks if c.section_label == "4.1")
     assert flood.char_start is not None and flood.char_end > flood.char_start
     assert MOTOR_2024[flood.char_start:flood.char_end].strip().startswith("Flood damage is treated")
+
+
+def test_markdown_style_headings_in_text_become_sections():
+    text = "# Claims Checklist\n\n## Document Checklist - Motor Insurance Claim\n- Claim intimation form.\n- Driver licence copy.\n\n## Third Party Damage\n- Demand letter.\n"
+    sections = extract("text/plain", text.encode()).sections
+    assert [(s.heading, s.label) for s in sections] == [("Document Checklist - Motor Insurance Claim", None), ("Third Party Damage", None)]
+    assert "Driver licence copy." in sections[0].text and sections[1].text == "- Demand letter."

@@ -6,9 +6,14 @@ fine for this hackathon prototype, NOT for commercial deployment (docs/decisions
 Output is always a draft that needs human validation.
 """
 
+import gc
+import os
 import re
 import threading
 from typing import Protocol
+
+IDLE_UNLOAD_SECONDS = float(os.environ.get("NLLB_IDLE_SECONDS", "600"))  # free ~2.4 GB when nobody is translating
+CPU_THREADS = int(os.environ.get("NLLB_THREADS", "4"))                    # leave the rest of the machine responsive
 
 EN, DZ = "eng_Latn", "dzo_Tibt"
 TIBETAN_DIGITS = str.maketrans("༠༡༢༣༤༥༦༧༨༩", "0123456789")
@@ -48,6 +53,21 @@ class NllbTranslator:
         self._lock = threading.Lock()
         self._tokenizer = None
         self._model = None
+        self._idle_timer: threading.Timer | None = None
+
+    def _unload(self) -> None:
+        with self._lock:
+            self._model = self._tokenizer = None
+        gc.collect()
+
+    def _touch(self) -> None:
+        """Restart the idle countdown; the model is dropped from memory if it is not used again soon."""
+        with self._lock:
+            if self._idle_timer:
+                self._idle_timer.cancel()
+            self._idle_timer = threading.Timer(IDLE_UNLOAD_SECONDS, self._unload)
+            self._idle_timer.daemon = True
+            self._idle_timer.start()
 
     def available(self) -> bool:
         try:
@@ -63,6 +83,7 @@ class NllbTranslator:
                 import torch
                 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
+                torch.set_num_threads(CPU_THREADS)
                 self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
                 self._model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name)
                 self._device = "mps" if torch.backends.mps.is_available() else "cpu"
@@ -83,6 +104,7 @@ class NllbTranslator:
                 out = model.generate(**batch, forced_bos_token_id=tokenizer.convert_tokens_to_ids(target),
                                      max_new_tokens=200, num_beams=4, no_repeat_ngram_size=3)
             pieces.append(tokenizer.batch_decode(out, skip_special_tokens=True)[0].strip())
+        self._touch()
         return " ".join(pieces)
 
 
