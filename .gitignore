@@ -21,3 +21,6 @@ data/raw/
 # OS / editor
 .DS_Store
 .idea/
+
+# DMS runtime data (uploaded documents and database)
+data/dms/
