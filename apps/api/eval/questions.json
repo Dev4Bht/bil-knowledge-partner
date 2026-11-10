@@ -1,0 +1,29 @@
+{
+  "_note": "Evaluation set over the FICTIONAL demo corpus (app/demo_fixtures.py). Results describe this small corpus only, not BIL's real documents.",
+  "questions": [
+    {"id": "Q01-flood-coverage", "role": "staff", "question": "A customer's car was damaged in a flood. Is it covered under a comprehensive motor policy, and what does she need to submit?",
+     "expect": {"status": "answered", "cite": [["Motor Insurance Handbook", "4.1"], ["Motor Insurance Handbook", "5.2"]], "facts": ["natural calamity", "approved workshop"], "no_superseded": true, "dzongkha": true}},
+    {"id": "Q02-housing-loan", "role": "staff", "question": "What are the eligibility steps in the SOP for a housing loan?",
+     "expect": {"status": "answered", "cite": [["Housing Loan SOP", "2"]], "facts": ["credit committee"], "no_superseded": true}},
+    {"id": "Q03-pfgf-withdrawal", "role": "staff", "question": "What is the procedure when a PF/GF member requests a partial withdrawal?",
+     "expect": {"status": "answered", "cite": [["PF/GF Partial Withdrawal Procedure", "2"]], "facts": ["10 working days"], "no_superseded": true}},
+    {"id": "Q04-old-version-history", "role": "staff", "question": "What did the 2022 motor handbook say about flood damage?", "include_history": true,
+     "expect": {"status": "answered", "cite": [["Motor Insurance Handbook", "4.1"]], "facts": ["flood extension"], "must_cite_superseded": true}},
+    {"id": "Q05-version-conflict", "role": "staff", "question": "How many days do we have to report a motor claim after the loss?",
+     "expect": {"status": "conflict", "cite": [["Motor Insurance Handbook", "5.1"], ["Circular 2024/017 Motor Claims", "2"]], "facts": ["7 days", "14 days"], "no_draft": true}},
+    {"id": "Q06-unsupported", "role": "staff", "question": "What is the premium for a third-party policy for a school bus?",
+     "expect": {"status": "no_evidence", "no_citations": true}},
+    {"id": "Q07-access-denied-staff", "role": "staff", "question": "What does the management briefing say about the claims reporting period being under review?",
+     "expect": {"status": "no_evidence", "no_citations": true, "must_not_mention": ["Management Briefing", "under review"]}},
+    {"id": "Q08-access-allowed-manager", "role": "manager", "question": "What does the management briefing say about the claims reporting period being under review?",
+     "expect": {"status": "answered", "cite": [["Management Briefing", "1"]], "facts": ["under review"]}},
+    {"id": "Q09-policy-change", "role": "staff", "question": "What changed in the motor handbook's flood cover between the 2022 and 2024 editions?", "include_history": true,
+     "expect": {"status": "answered", "cite": [["Motor Insurance Handbook", "4.1"]], "facts": ["flood extension"], "must_cite_superseded": true}},
+    {"id": "Q10-draft-not-used", "role": "staff", "question": "What documents does a customer need to renew a fire policy?",
+     "expect": {"status": "answered", "cite": [["Fire Policy Renewal Checklist", "1"]], "facts": ["renewal form"], "must_not_mention": ["photograph of the insured building"], "no_superseded": true}},
+    {"id": "Q11-settlement-time", "role": "staff", "question": "How long do we have to settle a motor claim once we have all the documents?",
+     "expect": {"status": "answered", "cite": [["Claims SOP - Motor", "Step 4"]], "facts": ["15 working days"]}},
+    {"id": "Q12-service-charter", "role": "staff", "question": "How quickly must we acknowledge a customer query, and in which languages do we reply?",
+     "expect": {"status": "answered", "cite": [["Customer Service Charter", "1"], ["Customer Service Charter", "2"]], "facts": ["one working day", "dzongkha"]}}
+  ]
+}
