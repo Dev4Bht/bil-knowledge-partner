@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Local data: indexes and any internal BIL documents must never be committed
+data/index/
+data/raw/
+*.sqlite3
+*.db
+
+# OS / editor
+.DS_Store
+.idea/
