@@ -1,35 +1,44 @@
 # Progress
 
-Spec: [`CLAUDE.md`](../CLAUDE.md). Decisions and environment: [`decisions.md`](decisions.md).
+Spec: [`CLAUDE.md`](../CLAUDE.md). Decisions: [`decisions.md`](decisions.md). Web app design: [`webapp-design.md`](webapp-design.md).
+
+Last updated 2026-11-10. Everything below was run, not assumed. Test counts are from this machine.
 
 ## Phase 0: inspect repository and system. Done
-
-Repository was nearly empty. Hardware, Docker and runtimes checked; results in `decisions.md`. A SQLite prototype built earlier (tasks 1 to 4 of an abandoned plan) was retired in favour of `CLAUDE.md`.
+Findings are in `decisions.md`.
 
 ## Phase 1: runnable scaffold. Done
+FastAPI, Alembic, Next.js 16, Docker Compose (Postgres with pgvector, API, web). Verified by booting the stack.
 
-Done and verified:
-- `apps/api`: FastAPI app with `/health` and `/ready`, restrictive CORS, settings from the environment, full domain model (14 tables).
-- Alembic migration `0001`, run up, down and up again against real PostgreSQL 16 (pgvector image).
-- Object store interface with filesystem and S3 backends. Path traversal and overwrite tests.
-- `apps/web`: Next.js 16, TypeScript, Tailwind, `nuqs` adapter, accessible live status panel.
-- `infra/docker-compose.yml`: Postgres, optional OpenSearch profile, api and web services.
-- Tests: API 20 passed (3 of them integration tests against Postgres); web 4 passed; web lint clean; web production build succeeds.
+## Phase 2: DMS vertical slice. Done (backend); web UI in progress
+- Auth: Argon2, httpOnly cookie session, CSRF header, login rate limit.
+- Roles admin, manager, staff; folder scope; document classification; drafts hidden from staff; denied reads answered as 404 and audited.
+- Upload validation (type, signature, size, sanitised name, CID screen), write-once storage, atomic approval, archive, text diff, audit log.
+- Fictional demo fixtures flagged `is_demo_fixture`, seeded outside production only.
+- Tests: access and cross-role leakage, approval including concurrent approvals, upload safety, seed behaviour per role.
 
-Verified on 2026-11-10 by actually running it:
-- `docker compose up -d --build` builds and starts `postgres`, `api` and `web`.
-- `GET /health` returns `{"status":"ok"}`; `GET /ready` reports database ready and document store ready (filesystem).
-- The web page is served at `http://localhost:3470`; a CORS preflight from that origin is allowed by the API.
-- API: 20 tests pass (3 integration tests against Postgres). Web: 4 tests pass, lint clean, production build succeeds.
+## Phase 3: ingestion and search. Done
+- Text, PDF and DOCX extraction with sections, headings, page numbers and offsets. Scanned PDFs are reported, not silently skipped (OCR is **not** implemented).
+- Background worker (database job queue, retries, stale-job recovery, startup backfill). Re-indexing is idempotent.
+- BGE-M3 embeddings through Ollama; PostgreSQL full-text plus pgvector; reciprocal rank fusion; query synonyms; keyword-only fallback when embeddings are down.
+- Access rules applied inside retrieval; drafts never searchable. Real-model test: a "natural calamity" question finds the "flood damage" section.
+- **Not done:** OpenSearch backend, reranker.
 
-Not yet verified: the web status panel in a real browser (checked by component tests and by the HTML being served, not by a browser session).
+## Phase 4: agent flow. Done
+LangGraph workflow with the six roles, a checkpointer and a bounded retry. Code-verified conflicts, citation/permission/figure checks, abstention, model-unavailable mode that still returns sources. Real-model run of the brief's flood question: `answered`, correct citation, superseded version flagged. See `architecture.md`.
 
-Blockers and deviations: see `decisions.md` (MinIO images unavailable, port 5440, Ollama not installed yet).
+## Phase 5: bilingual drafting. Done, experimental
+English draft plus a Dzongkha draft from NLLB-200 (Qwen3 8B produced looping syllables and is not used for Dzongkha). Drafts are checked for script, repetition, figures and back-translation drift and always labelled for human validation. Quality is unvalidated by a Dzongkha speaker. Weights are CC-BY-NC (non-commercial).
 
-## Phase 2: DMS vertical slice. Design written, build not started
+## Phase 6: polish and demo. In progress
+- Evaluation harness and a 12-question labelled set: `apps/api/eval/`. Results: see `evaluation.md` once the run completes.
+- Web interface (design system, Documents, Ask, Audit): being built; see the status section at the end of this file when updated.
 
-Full design for the DMS backend and the web app: [`webapp-design.md`](webapp-design.md). Auth dependencies (argon2, PyJWT) and ORM relationships are added; no endpoints yet.
-## Phase 3: ingestion and search. Not started
-## Phase 4: agent flow. Not started
-## Phase 5: bilingual drafting. Not started
-## Phase 6: polish and demo. Not started
+## Test status
+API: 104 passed (pytest, real PostgreSQL; includes tests against the real Qwen3 and BGE-M3 models, skipped when Ollama is absent).
+
+## Known gaps
+- The knowledge layer shares the DMS database (see `dms-adapter.md`); swapping in BIL's DMS needs a separate index with its own access data.
+- No OCR; no reranker; no OpenSearch; PDF and DOCX are not screened for personal data.
+- A real answer takes roughly 30 to 90 seconds on this machine (local 8B model, six steps).
+- The API container image is about 9.5 GB because PyTorch pulls CUDA packages on Linux; a CPU-only build would be much smaller.

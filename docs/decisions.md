@@ -24,8 +24,14 @@ Primary specification: [`CLAUDE.md`](../CLAUDE.md). This file records where real
 7. **Next.js 16 with Cache Components.** The installed version differs from older conventions, so I read the bundled docs. The shell stays static; live data is fetched client-side, and request-time reads must sit behind `<Suspense>`. Google-hosted fonts were removed so builds work offline; a system font stack with Tibetan-script fallbacks covers Dzongkha.
 8. **Secrets.** `.env` is git-ignored; `.env.example` holds placeholders only; the API refuses the development JWT secret when `APP_ENV=production`.
 
+9. **Dzongkha uses NLLB-200, not the chat model.** Qwen3 8B returned looping Tibetan syllables (tested). NLLB-200 (`facebook/nllb-200-distilled-600M`) supports `dzo_Tibt` and produced coherent Dzongkha, but drifted in meaning on one sentence ("motor" became "transportation"), which the back-translation check caught. Its weights are CC-BY-NC 4.0: acceptable for a hackathon prototype, **not** for commercial use. Quality has not been validated by a Dzongkha speaker.
+10. **Conflicts must be provable.** The first version trusted the model and raised a false conflict between agreeing documents. The model now has to quote the differing words from each passage and the code checks that each quote appears in its passage and that the quotes differ.
+11. **Docs reference only what is built.** `/capabilities` reports real state (index counts, model availability) so the UI never claims a feature that is missing.
+12. **API container size.** The `translation` extra pulls PyTorch with CUDA libraries on Linux, giving a ~9.5 GB image. A CPU-only PyTorch index would shrink it; not done yet.
+13. **Model cache.** The compose file mounts the host Hugging Face cache so the translation weights are not downloaded twice.
+
 ## Open items
 
-- Install Ollama and pull a Qwen3 model before Phase 4 (8B if memory allows, otherwise 4B).
-- Choose and verify an English to Dzongkha translation model and its licence before Phase 5.
-- BGE-M3 needs a download of roughly 2 GB before Phase 3.
+- Have a Dzongkha speaker review the draft translations and supply a terminology glossary (`docs` has no glossary yet: inventing Dzongkha terms would be unsafe).
+- Decide on a commercially licensed translation model before any real deployment.
+- OCR for scanned PDFs, a reranker and an OpenSearch backend are not built.
