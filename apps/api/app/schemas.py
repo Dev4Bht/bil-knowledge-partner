@@ -233,3 +233,34 @@ class AskOut(BaseModel):
     draft_notes: list[str] = []
     steps: list[Step] = []
     unsupported_claims: list[str] = []  # diagnostics; the API only fills this for admins
+
+
+# ---------------------------------------------------------------- chat history
+
+class ConversationSummary(BaseModel):
+    id: uuid.UUID
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    question_count: int
+
+
+class MessageOut(BaseModel):
+    id: uuid.UUID
+    role: Literal["user", "assistant"]
+    content: str
+    created_at: datetime
+    result: AskOut | None = None  # the full answer as it was shown, re-checked against the user's current access
+    notices: list[str] = []       # why a saved answer may be out of date, or why its text is hidden
+
+
+class ConversationDetail(BaseModel):
+    id: uuid.UUID
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    messages: list[MessageOut]
+
+
+class RenameIn(BaseModel):
+    title: str = Field(min_length=1, max_length=120)

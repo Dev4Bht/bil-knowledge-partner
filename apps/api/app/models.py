@@ -222,9 +222,12 @@ class IngestionJob(Base):
 
 class Conversation(Base):
     __tablename__ = "conversations"
+    __table_args__ = (Index("ix_conversations_user_updated", "user_id", "updated_at"),)
     id: Mapped[uuid.UUID] = _pk()
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    title: Mapped[str] = mapped_column(String(120), default="New chat")
     created_at: Mapped[datetime] = _created()
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Message(Base):
@@ -234,6 +237,9 @@ class Message(Base):
     role: Mapped[str] = mapped_column(String(20))  # user | assistant
     content: Mapped[str] = mapped_column(Text)
     source_version_ids: Mapped[list[Any]] = mapped_column(JSONB, default=list)  # identifiers only, never customer data
+    # The full structured answer (claims, citations, drafts) so a chat can be re-opened exactly as it was shown.
+    # Citations are re-checked against the user's current access every time it is read.
+    payload: Mapped[Optional[dict[str, Any]]] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = _created()
 
 
