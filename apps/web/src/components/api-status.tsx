@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import { API_URL } from "@/lib/api";
 
 type Check = { ok: boolean; detail?: string; backend?: string };
 type Ready = { status: string; checks: Record<string, Check> };
@@ -13,6 +12,7 @@ type State =
 
 const LABELS: Record<string, string> = { database: "Database", object_store: "Document store" };
 
+/** Live API readiness (GET /ready). Used on the sign-in screen so a down API is explained, not mysterious. */
 export function ApiStatus() {
   const [state, setState] = useState<State>({ kind: "loading" });
 
@@ -31,16 +31,15 @@ export function ApiStatus() {
   }, []);
 
   return (
-    <section aria-labelledby="status-heading" className="rounded-lg border border-cream-deep bg-white p-5">
-      <h2 id="status-heading" className="text-lg font-semibold text-navy">
+    <section aria-labelledby="status-heading" className="rounded-[12px] border border-line bg-surface p-4">
+      <h2 id="status-heading" className="text-[14px] font-semibold text-heading">
         System status
       </h2>
-      <div role="status" aria-live="polite" className="mt-3 text-sm">
+      <div role="status" aria-live="polite" className="mt-2 text-[14px]">
         {state.kind === "loading" && <p className="text-muted">Checking the API…</p>}
         {state.kind === "unreachable" && (
           <p className="text-bad">
-            The API is not reachable ({state.message}). Start it with <code>uv run uvicorn app.main:app</code> in{" "}
-            <code>apps/api</code>.
+            The API is not reachable ({state.message}). Start it with <code>uv run uvicorn app.main:app</code> in <code>apps/api</code>.
           </p>
         )}
         {(state.kind === "ready" || state.kind === "not_ready") && (

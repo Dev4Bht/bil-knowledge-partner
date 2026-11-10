@@ -33,7 +33,8 @@ CACHE = Path(__file__).resolve().parents[3] / "data" / "public_cache"
 UA = "Mozilla/5.0 (BIL knowledge partner prototype; fetching public documents)"
 TODAY = date.today().isoformat()
 NEW_FOLDERS = {("corporate", "RMA Regulations"), ("corporate", "Public Information")}
-JUNK = {"-", "/", "home", "toll free number", "document", "documents"}
+JUNK = {"-", "/", "home", "toll free number", "document", "documents", "loading...", "accept", "read more", "info@bil.bt", "2011"}
+BOILERPLATE = re.compile(r"^(we use cookie|404!)", re.I)
 
 
 def download(url: str) -> Path | None:
@@ -65,10 +66,12 @@ def html_to_text(raw: bytes) -> str:
     text = html.unescape(re.sub(r"<[^>]+>", "", text)).replace("\xa0", " ")
     lines, previous = [], None
     for line in (re.sub(r"[ \t]+", " ", l).strip() for l in text.splitlines()):
-        if not line or line.lower() in JUNK or line == previous:
+        if not line or line.lower() in JUNK or BOILERPLATE.match(line) or line == previous:
             continue
         lines.append(line)
         previous = line
+    if "no data found" in text.lower():  # BIL serves some empty pages with a 404 message inside a 200 response
+        return ""
     first_heading = next((i for i, l in enumerate(lines) if l.startswith("## ")), None)
     if first_heading is not None:  # everything before the first heading is the page title and breadcrumb navigation
         lines = lines[first_heading:]
@@ -164,7 +167,7 @@ def main() -> None:
                 if item["kind"] == "web":
                     text = html_to_text(raw)
                     if len(text) < 200:
-                        raise RuntimeError("page has too little text")
+                        raise RuntimeError("skipped: the static page has no real content (it is empty or loaded by JavaScript)")
                     content, name, ctype = text.encode(), re.sub(r"[^A-Za-z0-9]+", "_", urllib.parse.urlparse(url).path.strip("/") or "home") + ".txt", "text/plain"
                     lineage = lineage_web(url, hashlib.sha256(content).hexdigest())
                 else:

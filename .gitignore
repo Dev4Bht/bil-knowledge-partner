@@ -25,3 +25,6 @@ data/raw/
 # DMS runtime data (uploaded documents and database)
 data/dms/
 data/objects/
+
+# Downloaded public documents (never commit third-party documents)
+data/
