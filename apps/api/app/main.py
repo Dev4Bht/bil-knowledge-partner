@@ -8,7 +8,7 @@ from sqlalchemy import text
 from .config import get_settings
 from .db import get_engine
 from .errors import ApiError
-from .routers import auth, catalog, documents, search, system
+from .routers import auth, catalog, chat, documents, search, system
 from .worker import start_in_background
 from .storage import build_object_store
 
@@ -27,6 +27,20 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
         indexer = start_in_background(settings) if settings.run_worker else None
+        if settings.translation_enabled and settings.run_worker:  # load the Dzongkha model in the background, not on first request
+            import threading
+
+            from .agents.translate import get_nllb
+
+            def _warm() -> None:
+                try:
+                    translator = get_nllb(settings.translation_model)
+                    if translator.available():
+                        translator._load()
+                except Exception:
+                    pass  # a missing model is reported per request, never fatal at startup
+
+            threading.Thread(target=_warm, name="bil-translation-warmup", daemon=True).start()
         yield
         if indexer:
             indexer[1].set()
@@ -46,7 +60,7 @@ def create_app() -> FastAPI:
     async def api_error_handler(_request: Request, exc: ApiError):
         return JSONResponse({"detail": exc.message, "code": exc.code}, status_code=exc.status_code)
 
-    for router in (auth.router, catalog.router, documents.router, search.router, system.router):
+    for router in (auth.router, catalog.router, documents.router, search.router, chat.router, system.router):
         app.include_router(router)
 
     @app.get("/health")

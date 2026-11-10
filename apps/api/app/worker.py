@@ -18,7 +18,12 @@ def run_forever(settings: Settings, stop: threading.Event, poll_seconds: float =
     factory = sessionmaker(get_engine(), expire_on_commit=False)
     store = build_object_store(settings)
     embedder = OllamaEmbedder(settings.ollama_base_url, settings.embedding_model)
-    log.info("indexing worker started")
+    try:
+        with factory() as db:
+            queued = ingestion.backfill(db)
+        log.info("indexing worker started; %d version(s) queued for indexing", queued)
+    except Exception:
+        log.exception("could not backfill indexing jobs")
     while not stop.is_set():
         try:
             with factory() as db:

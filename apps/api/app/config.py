@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     # Local LLM (Ollama runs on the host). Never a cloud API.
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen3:8b"
+    translation_enabled: bool = True
+    translation_model: str = "facebook/nllb-200-distilled-600M"  # CC-BY-NC 4.0: non-commercial use only
     embedding_model: str = "bge-m3"
     vector_max_distance: float = 0.65  # cosine distance above which a passage is treated as unrelated
     run_worker: bool = True            # index approved documents in a background thread inside the API

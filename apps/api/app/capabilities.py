@@ -11,8 +11,8 @@ from .schemas import CapabilitiesOut
 # Flipped to True only when the feature is built and tested (docs/progress.md).
 EXTRACTION_BUILT = True
 SEARCH_BUILT = True
-AGENTS_BUILT = False
-TRANSLATION_BUILT = False
+AGENTS_BUILT = True
+TRANSLATION_BUILT = True  # experimental: always labelled for human validation
 
 
 def ollama_status(settings: Settings) -> tuple[bool, str | None, str | None]:
@@ -50,10 +50,8 @@ def compute_capabilities(settings: Settings, db: Session) -> CapabilitiesOut:
         notes.append("The local model server (Ollama) is not reachable.")
     elif model is None:
         notes.append(f"The local model '{settings.ollama_model}' has not been downloaded.")
-    if not AGENTS_BUILT:
-        notes.append("The question-answering workflow is not built yet.")
-    if not TRANSLATION_BUILT:
-        notes.append("Dzongkha drafting is not available yet.")
+    if TRANSLATION_BUILT:
+        notes.append("Dzongkha drafts are experimental machine translations and always need human validation.")
     return CapabilitiesOut(dms=True, extraction=EXTRACTION_BUILT, search=SEARCH_BUILT and EXTRACTION_BUILT,
                            llm=llm and AGENTS_BUILT, translation=TRANSLATION_BUILT and llm,
                            llm_model=model if llm else None, notes=notes)

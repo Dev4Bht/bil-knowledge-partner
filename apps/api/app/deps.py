@@ -74,3 +74,25 @@ def get_embedder(settings: Settings = Depends(get_settings)):
     from .embeddings import OllamaEmbedder
 
     return OllamaEmbedder(settings.ollama_base_url, settings.embedding_model)
+
+
+def get_llm(settings: Settings = Depends(get_settings)):
+    from .agents.llm import OllamaLLM
+
+    return OllamaLLM(settings.ollama_base_url, settings.ollama_model)
+
+
+_chat_limiter: RateLimiter | None = None
+
+
+def chat_limiter() -> RateLimiter:
+    global _chat_limiter
+    if _chat_limiter is None:
+        _chat_limiter = RateLimiter(30)  # questions per user per minute
+    return _chat_limiter
+
+
+def get_translator(settings: Settings = Depends(get_settings)):
+    from .agents.translate import get_nllb
+
+    return get_nllb(settings.translation_model) if settings.translation_enabled else None

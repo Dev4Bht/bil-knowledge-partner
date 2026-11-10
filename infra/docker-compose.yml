@@ -63,6 +63,8 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - objects:/data/objects
+      # Reuse the Dzongkha translation weights already downloaded on the host (about 2.4 GB), so the container does not fetch them again.
+      - ${HOME}/.cache/huggingface:/root/.cache/huggingface
 
   web:
     build:

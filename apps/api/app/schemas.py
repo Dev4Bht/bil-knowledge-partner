@@ -171,3 +171,65 @@ class IngestionJobOut(BaseModel):
     warning: str | None
     chunk_count: int
     duration_ms: int | None
+
+
+# ---------------------------------------------------------------- /chat/ask (CLAUDE.md section 6)
+
+class AskIn(BaseModel):
+    question: str = Field(min_length=3, max_length=2000)
+    business_line: BusinessLineCode | None = None
+    language: Literal["en", "dz"] | None = None
+    include_history: bool = False
+    conversation_id: uuid.UUID | None = None
+
+
+class Citation(BaseModel):
+    id: str  # "E1", "E2", ... stable within one response
+    document_id: uuid.UUID
+    version_id: uuid.UUID
+    title: str
+    folder_path: str
+    version_label: str
+    version_status: VersionStatus
+    section: str | None
+    page: int | None
+    snippet: str
+    url: str
+    is_demo_fixture: bool
+
+
+class Claim(BaseModel):
+    text: str
+    citation_ids: list[str]
+
+
+class VersionWarning(BaseModel):
+    kind: Literal["older_version_ignored", "conflict", "draft_excluded", "history_included"]
+    message: str
+    version_ids: list[uuid.UUID]
+
+
+class Drafts(BaseModel):
+    en: str | None = None
+    dzo: str | None = None
+
+
+class Step(BaseModel):
+    agent: str
+    summary: str
+
+
+class AskOut(BaseModel):
+    conversation_id: uuid.UUID
+    status: Literal["answered", "no_evidence", "conflict", "model_unavailable", "needs_clarification", "error"]
+    answer: str | None
+    claims: list[Claim]
+    citations: list[Citation]
+    version_warnings: list[VersionWarning]
+    drafts: Drafts
+    needs_human_review: bool = True
+    abstention_reason: str | None
+    caveats: list[str] = []
+    draft_notes: list[str] = []
+    steps: list[Step] = []
+    unsupported_claims: list[str] = []  # diagnostics; the API only fills this for admins

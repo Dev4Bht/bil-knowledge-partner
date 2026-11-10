@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from ..embeddings import Embedder, EmbeddingUnavailable
 from ..extraction import chunk_sections, extract
-from ..models import DocumentChunk, DocumentVersion, IngestionJob, JobState, QualityFlag
+from ..models import DocumentChunk, DocumentVersion, IngestionJob, JobState, QualityFlag, VersionStatus
 from ..storage import ObjectStore
 
 MAX_ATTEMPTS = 3
@@ -108,3 +108,16 @@ def process_next(db: Session, store: ObjectStore, embedder: Embedder) -> bool:
         return False
     process_job(db, store, embedder, job)
     return True
+
+
+def backfill(db: Session) -> int:
+    """Queue indexing for every non-draft version that has never had a job (for example, approved before indexing
+    existed). Returns how many were queued."""
+    versions = db.execute(
+        select(DocumentVersion.id).where(DocumentVersion.status != VersionStatus.draft)
+        .where(~DocumentVersion.id.in_(select(IngestionJob.version_id)))
+    ).scalars().all()
+    for version_id in versions:
+        enqueue(db, version_id)
+    db.commit()
+    return len(versions)
