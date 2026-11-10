@@ -166,3 +166,37 @@ def test_deleting_is_audited_without_the_chat_content(chat):
     events = admin.get("/audit", params={"page_size": 100}).json()["items"]
     assert {"chat.rename", "chat.delete"} <= {e["event"] for e in events}
     assert "SECRET-WORD" not in str(events) and "SECRET-TITLE" not in str(events)
+
+
+def test_the_backfill_migration_titles_old_chats_from_their_first_question(db, make_user):
+    import importlib.util
+    from datetime import datetime, timedelta, timezone
+    from pathlib import Path
+
+    from sqlalchemy import text
+
+    spec = importlib.util.spec_from_file_location("backfill", Path("alembic/versions/0004_backfill_chat_titles.py"))
+    migration = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(migration)
+
+    user = make_user("legacy@test.bil")
+    t0 = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    old = Conversation(user_id=user.id, title="New chat")           # saved before titles existed
+    kept = Conversation(user_id=user.id, title="Renamed by user")   # must not be touched
+    empty = Conversation(user_id=user.id, title="New chat")         # no messages at all
+    db.add_all([old, kept, empty])
+    db.flush()
+    db.add_all([
+        Message(conversation_id=old.id, role="user", content="  Is flood   damage\ncovered under comprehensive motor insurance and what is needed to claim?  ", created_at=t0),
+        Message(conversation_id=old.id, role="assistant", content="Yes", created_at=t0 + timedelta(minutes=1)),
+        Message(conversation_id=old.id, role="user", content="Second question", created_at=t0 + timedelta(minutes=9)),
+        Message(conversation_id=kept.id, role="user", content="Another question", created_at=t0),
+    ])
+    db.commit()
+    db.execute(text(migration.BACKFILL_TITLES))
+    db.execute(text(migration.BACKFILL_UPDATED))
+    db.commit()
+    db.expire_all()
+    assert old.title == "Is flood damage covered under comprehensive motor insurance a"[:60]  # first question, whitespace collapsed, 60 chars
+    assert kept.title == "Renamed by user" and empty.title == "New chat"
+    assert old.updated_at == t0 + timedelta(minutes=9)  # the time of the last message
