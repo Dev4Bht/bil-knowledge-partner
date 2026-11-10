@@ -121,6 +121,9 @@ class Folder(Base):
     business_line_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("business_lines.id"))
     required_role_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("roles.id"), nullable=True)  # optional access scope
     created_at: Mapped[datetime] = _created()
+    parent: Mapped[Optional["Folder"]] = relationship(remote_side="Folder.id")
+    business_line: Mapped["BusinessLine"] = relationship()
+    required_role: Mapped[Optional[Role]] = relationship()
 
 
 class Document(Base):
@@ -136,6 +139,9 @@ class Document(Base):
     is_demo_fixture: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = _created()
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    folder: Mapped[Folder] = relationship()
+    business_line: Mapped[BusinessLine] = relationship()
+    owner: Mapped[Optional[User]] = relationship()
     versions: Mapped[list["DocumentVersion"]] = relationship(back_populates="document", order_by="DocumentVersion.created_at")
     access_roles: Mapped[list[Role]] = relationship(secondary=document_access_roles)
 
@@ -168,6 +174,8 @@ class DocumentVersion(Base):
     source_lineage: Mapped[str] = mapped_column(Text, default="")
     uploaded_by_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = _created()
+    uploaded_by: Mapped[Optional[User]] = relationship(foreign_keys=[uploaded_by_id])
+    approved_by: Mapped[Optional[User]] = relationship(foreign_keys=[approved_by_id])
 
 
 class DocumentChunk(Base):

@@ -26,7 +26,9 @@ Not yet verified: the web status panel in a real browser (checked by component t
 
 Blockers and deviations: see `decisions.md` (MinIO images unavailable, port 5440, Ollama not installed yet).
 
-## Phase 2: DMS vertical slice. Not started
+## Phase 2: DMS vertical slice. Design written, build not started
+
+Full design for the DMS backend and the web app: [`webapp-design.md`](webapp-design.md). Auth dependencies (argon2, PyJWT) and ORM relationships are added; no endpoints yet.
 ## Phase 3: ingestion and search. Not started
 ## Phase 4: agent flow. Not started
 ## Phase 5: bilingual drafting. Not started
