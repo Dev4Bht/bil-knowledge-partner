@@ -1,0 +1,309 @@
+@import "tailwindcss";
+
+/*
+ * BIL Knowledge Partner design tokens.
+ * Navy / cream / gold. Original marks only; fonts are bundled open-licence packages (see layout.tsx).
+ * Every text/background pairing below was chosen to meet WCAG AA (4.5:1 text, 3:1 UI).
+ */
+:root {
+  color-scheme: light;
+  --bg: #f5f0ea;
+  --surface: #ffffff;
+  --surface-2: #faf6f0;
+  --surface-3: #efe8de;
+  --line: #e0d7ca;
+  --line-strong: #c9bdac;
+  --ink: #2b2f3a;
+  --muted: #5d6472;
+  --navy: #1b2a4e;
+  --navy-soft: #2f4170;
+  --rail: #1b2a4e;
+  --rail-ink: #e9ecf5;
+  --rail-muted: #aab3cc;
+  --primary: #1b2a4e;
+  --primary-hover: #2f4170;
+  --primary-ink: #ffffff;
+  --heading: #1b2a4e;
+  --link: #24408f;
+  --gold: #b87d0a;
+  --gold-ink: #7d5400;
+  --gold-soft: #f8ecd0;
+  --ok: #1f6f5c;
+  --ok-soft: #e0f0ea;
+  --warn: #8a5a00;
+  --warn-soft: #fbefd3;
+  --bad: #a3382d;
+  --bad-soft: #f8e3e0;
+  --info: #2f4170;
+  --info-soft: #e5eaf6;
+  --shadow-sm: 0 1px 0 rgb(27 42 78 / 0.04);
+  --shadow-md: 0 6px 18px rgb(27 42 78 / 0.08), 0 1px 2px rgb(27 42 78 / 0.05);
+  --shadow-lg: 0 18px 48px rgb(15 22 48 / 0.28);
+  --scrim: rgb(15 22 48 / 0.5);
+  --diff-add: #dff2e6;
+  --diff-del: #fbe4e1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0e1427;
+    --surface: #162040;
+    --surface-2: #1a2548;
+    --surface-3: #212d57;
+    --line: #2b3763;
+    --line-strong: #43528a;
+    --ink: #e8e5df;
+    --muted: #a9b0c4;
+    --navy: #0a0f20;
+    --navy-soft: #1d2a52;
+    --rail: #0a0f20;
+    --rail-ink: #e9ecf5;
+    --rail-muted: #9aa4c2;
+    --primary: #4560b4;
+    --primary-hover: #566fc4;
+    --primary-ink: #ffffff;
+    --heading: #f1ede6;
+    --link: #9fb6f2;
+    --gold: #e0a63a;
+    --gold-ink: #efc269;
+    --gold-soft: #3a2f14;
+    --ok: #62c7a9;
+    --ok-soft: #12362f;
+    --warn: #e5b44f;
+    --warn-soft: #3a2d10;
+    --bad: #f28a7e;
+    --bad-soft: #401c19;
+    --info: #a9bff5;
+    --info-soft: #1c2a55;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 14px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 18px 48px rgb(0 0 0 / 0.6);
+    --scrim: rgb(3 6 16 / 0.65);
+    --diff-add: #14382f;
+    --diff-del: #43201d;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1427;
+  --surface: #162040;
+  --surface-2: #1a2548;
+  --surface-3: #212d57;
+  --line: #2b3763;
+  --line-strong: #43528a;
+  --ink: #e8e5df;
+  --muted: #a9b0c4;
+  --navy: #0a0f20;
+  --navy-soft: #1d2a52;
+  --rail: #0a0f20;
+  --rail-ink: #e9ecf5;
+  --rail-muted: #9aa4c2;
+  --primary: #4560b4;
+  --primary-hover: #566fc4;
+  --primary-ink: #ffffff;
+  --heading: #f1ede6;
+  --link: #9fb6f2;
+  --gold: #e0a63a;
+  --gold-ink: #efc269;
+  --gold-soft: #3a2f14;
+  --ok: #62c7a9;
+  --ok-soft: #12362f;
+  --warn: #e5b44f;
+  --warn-soft: #3a2d10;
+  --bad: #f28a7e;
+  --bad-soft: #401c19;
+  --info: #a9bff5;
+  --info-soft: #1c2a55;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 14px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 18px 48px rgb(0 0 0 / 0.6);
+  --scrim: rgb(3 6 16 / 0.65);
+  --diff-add: #14382f;
+  --diff-del: #43201d;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-rail: var(--rail);
+  --color-rail-ink: var(--rail-ink);
+  --color-rail-muted: var(--rail-muted);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-ink: var(--primary-ink);
+  --color-heading: var(--heading);
+  --color-link: var(--link);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-gold-soft: var(--gold-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --font-sans: "Source Sans 3 Variable", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Serif Tibetan Variable",
+    sans-serif;
+  --font-display: "Fraunces Variable", Georgia, "Times New Roman", "Noto Serif Tibetan Variable", serif;
+  --font-dz: "Noto Serif Tibetan Variable", "Noto Serif Tibetan", "Jomolhari", "Kailasa", "Microsoft Himalaya", serif;
+  --shadow-card: var(--shadow-sm);
+  --shadow-pop: var(--shadow-md);
+  --shadow-modal: var(--shadow-lg);
+  --radius-card: 12px;
+  --radius-control: 8px;
+}
+
+html {
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  font-feature-settings: "kern", "liga";
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--heading);
+}
+
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Dzongkha / Tibetan script: taller line height so stacked marks are never clipped. */
+:lang(dz),
+.font-dz {
+  font-family: var(--font-dz);
+  line-height: 2;
+}
+
+::selection {
+  background: var(--gold);
+  color: #fff;
+}
+
+/* Original geometric pattern (nested diamonds), used on login and empty states only. */
+.pattern-band {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' stroke='%23b87d0a' stroke-width='1.2' opacity='0.55'%3E%3Cpath d='M24 2 46 24 24 46 2 24Z'/%3E%3Cpath d='M24 12 36 24 24 36 12 24Z'/%3E%3Cpath d='M24 19 29 24 24 29 19 24Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 48px 48px;
+}
+
+/* Motion: short, purposeful, and fully off for reduced-motion users. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slide-in-right {
+  from {
+    transform: translateX(28px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.anim-rise {
+  animation: rise-in 180ms ease-out both;
+}
+.anim-fade {
+  animation: fade-in 140ms ease-out both;
+}
+.anim-slide {
+  animation: slide-in-right 200ms ease-out both;
+}
+.anim-sheet {
+  animation: sheet-up 180ms ease-out both;
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-3) 25%, var(--surface-2) 50%, var(--surface-3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: 8px;
+}
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* Scrollbars that match the theme without hiding them. */
+* {
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

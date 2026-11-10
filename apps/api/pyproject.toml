@@ -1,0 +1,46 @@
+[project]
+name = "bil-api"
+version = "0.1.0"
+description = "BIL Agentic Knowledge Partner: DMS and AI API"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy>=2.0",
+  "alembic>=1.13",
+  "psycopg[binary]>=3.2",
+  "pydantic-settings>=2.4",
+  "minio>=7.2",
+  "python-multipart>=0.0.9",
+  "argon2-cffi>=25.1.0",
+  "pyjwt>=2.15.1",
+  "httpx>=0.28.1",
+  "pypdf>=7.0.0",
+  "python-docx>=1.2.0",
+  "pgvector>=0.5.1",
+  "langgraph>=1.2.20",
+]
+
+[project.optional-dependencies]
+translation = [
+    "sentencepiece>=0.2.3",
+    "torch>=2.15.0",
+    "transformers>=5.22.2",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "integration: needs the Postgres service from infra/docker-compose.yml",
+  "live_ollama: needs Ollama with the bge-m3 / qwen3 models pulled (skipped otherwise)",
+]

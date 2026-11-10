@@ -1,0 +1,87 @@
+# Run from the repository root:
+#   cp .env.example .env            # then edit the passwords
+#   docker compose --env-file .env -f infra/docker-compose.yml up -d postgres
+#   docker compose --env-file .env -f infra/docker-compose.yml up -d --build      # adds the api
+#   docker compose --env-file .env -f infra/docker-compose.yml --profile opensearch up -d   # optional OpenSearch
+#
+# Original documents are stored on a local volume by default. MinIO's official container images are no
+# longer published on Docker Hub or Quay, so no object-store container is included; see docs/decisions.md.
+name: bil
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16          # PostgreSQL 16 with the pgvector extension
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5440}:5432"   # localhost only; 5440 avoids clashing with other local databases
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Optional, heavier search backend. The default backend is PostgreSQL full-text + pgvector
+  # (see docs/decisions.md). Development only: the security plugin is disabled.
+  opensearch:
+    profiles: ["opensearch"]
+    image: opensearchproject/opensearch:2.17.1
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+      bootstrap.memory_lock: "true"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - osdata:/usr/share/opensearch/data
+
+  api:
+    build:
+      context: ../apps/api
+      args:
+        WITH_TRANSLATION: ${WITH_TRANSLATION:-false}
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      OBJECT_STORE_BACKEND: filesystem
+      OBJECT_STORE_PATH: /data/objects
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3470}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      SEED_DEMO: ${SEED_DEMO:-false}
+      SEED_FIXTURES: ${SEED_FIXTURES:-false}
+      TRANSLATION_ENABLED: ${TRANSLATION_ENABLED:-true}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      OLLAMA_BASE_URL: ${OLLAMA_DOCKER_URL:-http://host.docker.internal:11434}   # Ollama runs on the host, not in a container
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3:8b}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - objects:/data/objects
+      # Reuse the Dzongkha translation weights already downloaded on the host (about 2.4 GB), so the container does not fetch them again.
+      - ${HOME}/.cache/huggingface:/root/.cache/huggingface
+
+  web:
+    build:
+      context: ../apps/web
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-3470}:3000"   # uncommon port: other local dev servers often hold 3000/3100
+
+volumes:
+  pgdata:
+  objects:
+  osdata:
