@@ -46,4 +46,4 @@ API: 138 tests passed (pytest, real PostgreSQL; the tests against the real Qwen3
 - Conflict detection only flags differing figures (days, amounts, dates). A contradiction with no number in it is not auto-flagged, by design, to avoid blocking correct answers.
 - Two evaluation questions still fail (R01, R10): the answer is correct but less specific than the documents allow.
 - Five labelled "EVAL FIXTURE" documents created by the evaluation runner remain in the DMS and are visible to admin and manager accounts.
-- The API container image is about 9.5 GB because PyTorch pulls CUDA packages on Linux; a CPU-only build would be much smaller.
+- The API image is 472 MB without the Dzongkha translation extra (opt in with `WITH_TRANSLATION=true`, which brings back the multi-GB PyTorch/CUDA install).
