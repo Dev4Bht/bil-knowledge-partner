@@ -42,10 +42,10 @@ for (const width of WIDTHS) {
   await page.waitForTimeout(400);
   await shot("documents", true);
   await page.setViewportSize({ width, height: HEIGHTS[width] });
-  await page.goto(`${BASE}/documents?q=Motor%20Insurance%20Handbook`);
-  await page.getByRole("link", { name: /Motor Insurance Handbook/ }).first().waitFor();
+  await page.goto(`${BASE}/documents?q=BIL%20Insurance%20Handbook`);
+  await page.getByRole("link", { name: /BIL Insurance Handbook/ }).first().waitFor();
 
-  await page.getByRole("link", { name: /Motor Insurance Handbook/ }).first().click();
+  await page.getByRole("link", { name: /BIL Insurance Handbook/ }).first().click();
   await page.waitForURL(/\/documents\/[0-9a-f-]+/, { waitUntil: "commit" });
   await page.getByRole("heading", { name: "Versions" }).waitFor();
   await page.waitForTimeout(800);
