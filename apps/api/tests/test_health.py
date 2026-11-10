@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app import main
+from app.config import get_settings
 from app.main import create_app
 
 
@@ -20,7 +21,8 @@ def test_ready_reports_503_with_reasons_when_a_dependency_is_down(monkeypatch):
 
 def test_cors_allows_only_the_web_origin():
     client = TestClient(create_app())
-    allowed = client.options("/health", headers={"Origin": "http://localhost:3000", "Access-Control-Request-Method": "GET"})
-    assert allowed.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    web_origin = get_settings().web_origin
+    allowed = client.options("/health", headers={"Origin": web_origin, "Access-Control-Request-Method": "GET"})
+    assert allowed.headers.get("access-control-allow-origin") == web_origin
     other = client.options("/health", headers={"Origin": "http://evil.example", "Access-Control-Request-Method": "GET"})
     assert "access-control-allow-origin" not in other.headers

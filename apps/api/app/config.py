@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=("../../.env", ".env"), extra="ignore")
 
     app_env: str = "dev"
-    database_url: str = "postgresql+psycopg://bil:bil_dev_password@localhost:5432/bil"
-    web_origin: str = "http://localhost:3000"
+    database_url: str = "postgresql+psycopg://bil:bil_dev_password@localhost:5440/bil"
+    web_origin: str = "http://localhost:3470"
     jwt_secret: str = _DEV_SECRET
 
     # Original documents: local filesystem by default, or any S3-compatible server.
