@@ -111,6 +111,7 @@ def evaluate(api: str, password: str, only: set[str] | None = None) -> dict:
     get = lambda role: clients.setdefault(role, Client(api, EMAIL[role], password))
     setup_controls(get("admin"), data["setup"])
     rows = []
+    created: list[tuple[str, str]] = []  # (role, conversation id): the runner removes its own chats afterwards
     for q in data["questions"]:
         if only and q["id"].split("-")[0] not in only and q["id"] not in only:
             continue
@@ -119,6 +120,8 @@ def evaluate(api: str, password: str, only: set[str] | None = None) -> dict:
         result = client.request("POST", "/chat/ask", {"question": q["question"], "include_history": q.get("include_history", False)})
         latency = time.monotonic() - started
         row = {"id": q["id"], "latency_s": round(latency, 1), "status": result.get("status"), "checks": {}}
+        if result.get("conversation_id"):
+            created.append((q["role"], result["conversation_id"]))
         if result.get("_http"):
             row["checks"]["http_ok"] = False
             rows.append(row)
@@ -166,6 +169,9 @@ def evaluate(api: str, password: str, only: set[str] | None = None) -> dict:
                 row["groundedness_text_sources"] = round(sum(scores) / len(scores), 3)
         row["passed"] = all(row["checks"].values())
         rows.append(row)
+
+    for role, conversation_id in created:  # leave nobody's chat history cluttered with evaluation questions
+        get(role).request("DELETE", f"/chat/conversations/{conversation_id}")
 
     def rate(check):
         values = [r["checks"][check] for r in rows if check in r["checks"]]
