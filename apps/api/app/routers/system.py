@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
@@ -5,16 +7,27 @@ from sqlalchemy.orm import Session, joinedload
 from ..capabilities import compute_capabilities
 from ..config import Settings, get_settings
 from ..db import get_db
-from ..deps import current_user, require_admin
-from ..models import AuditEvent, User
-from ..schemas import AuditOut, AuditPage, CapabilitiesOut
+from ..deps import current_user, require_admin, require_manager
+from ..errors import not_found
+from ..models import AuditEvent, IngestionJob, User
+from ..schemas import AuditOut, AuditPage, CapabilitiesOut, IngestionJobOut
 
 router = APIRouter(tags=["system"])
 
 
 @router.get("/capabilities", response_model=CapabilitiesOut)
-def capabilities(user: User = Depends(current_user), settings: Settings = Depends(get_settings)):
-    return compute_capabilities(settings)
+def capabilities(user: User = Depends(current_user), settings: Settings = Depends(get_settings),
+                 db: Session = Depends(get_db)):
+    return compute_capabilities(settings, db)
+
+
+@router.get("/ingestion-jobs/{job_id}", response_model=IngestionJobOut)
+def ingestion_job(job_id: uuid.UUID, user: User = Depends(require_manager), db: Session = Depends(get_db)):
+    job = db.get(IngestionJob, job_id)
+    if job is None:
+        raise not_found("Job not found")
+    return IngestionJobOut(id=job.id, version_id=job.version_id, state=job.state.value, attempts=job.attempts,
+                           error=job.error, warning=job.warning, chunk_count=job.chunk_count, duration_ms=job.duration_ms)
 
 
 @router.get("/audit", response_model=AuditPage)

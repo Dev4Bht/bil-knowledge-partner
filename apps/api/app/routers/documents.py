@@ -11,6 +11,7 @@ from ..deps import csrf_guard, current_user, get_store, require_manager
 from ..models import AccessClassification, BusinessLineCode, User, VersionStatus
 from ..presenters import document_detail, document_summary, version_out
 from ..schemas import CompareOut, DocumentDetail, DocumentPage, VersionOut
+from ..services import audit, ingestion
 from ..services import documents as svc
 from ..storage import ObjectStore
 
@@ -105,3 +106,14 @@ def compare(document_id: uuid.UUID, from_: uuid.UUID = Query(..., alias="from"),
             user: User = Depends(current_user), db: Session = Depends(get_db), store: ObjectStore = Depends(get_store)):
     a, b, lines = svc.compare_versions(db, store, user, document_id, from_, to)
     return CompareOut(from_version=version_out(a), to_version=version_out(b), lines=lines)
+
+
+@router.post("/{document_id}/reindex", status_code=202)
+def reindex(document_id: uuid.UUID, user: User = Depends(require_manager), db: Session = Depends(get_db)):
+    """Queue indexing again for every approved, superseded or archived version. Drafts are never indexed."""
+    document = svc.get_document(db, user, document_id)
+    jobs = [ingestion.enqueue(db, v.id) for v in document.versions if v.status != VersionStatus.draft]
+    audit.record(db, actor_id=user.id, event="document.reindex", resource_type="document", resource_id=str(document_id),
+                 detail={"jobs": len(jobs)})
+    db.commit()
+    return {"queued": [str(job.id) for job in jobs]}

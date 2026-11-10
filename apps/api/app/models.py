@@ -9,11 +9,12 @@ import uuid
 from datetime import date, datetime
 from typing import Any, Optional
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
-    Boolean, Column, Date, DateTime, Enum as SAEnum, ForeignKey, Index, Integer, String, Table, Text,
+    Boolean, Column, Computed, Date, DateTime, Enum as SAEnum, ForeignKey, Index, Integer, String, Table, Text,
     UniqueConstraint, Uuid, func, text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -182,7 +183,11 @@ class DocumentChunk(Base):
     """Derived from a version's file. Rebuildable. The embedding column is added with the search backend (phase 3)."""
 
     __tablename__ = "document_chunks"
-    __table_args__ = (UniqueConstraint("version_id", "ordinal"),)
+    __table_args__ = (
+        UniqueConstraint("version_id", "ordinal"),
+        Index("ix_chunks_tsv", "tsv", postgresql_using="gin"),
+        Index("ix_chunks_embedding", "embedding", postgresql_using="hnsw", postgresql_ops={"embedding": "vector_cosine_ops"}),
+    )
     id: Mapped[uuid.UUID] = _pk()
     version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("document_versions.id", ondelete="CASCADE"))
     ordinal: Mapped[int] = mapped_column(Integer)
@@ -194,6 +199,9 @@ class DocumentChunk(Base):
     char_start: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     char_end: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     quality_flag: Mapped[QualityFlag] = mapped_column(_enum(QualityFlag), default=QualityFlag.ok)
+    embedding: Mapped[Optional[list[float]]] = mapped_column(Vector(1024), nullable=True)  # BGE-M3, 1024 dimensions
+    tsv: Mapped[Optional[Any]] = mapped_column(
+        TSVECTOR, Computed("to_tsvector('english', coalesce(heading, '') || ' ' || text)", persisted=True), nullable=True)
     created_at: Mapped[datetime] = _created()
 
 
@@ -204,6 +212,8 @@ class IngestionJob(Base):
     state: Mapped[JobState] = mapped_column(_enum(JobState), default=JobState.queued)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    warning: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # indexed, but something was degraded
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0)
     started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)

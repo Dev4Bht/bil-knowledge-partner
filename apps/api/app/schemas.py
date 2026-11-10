@@ -128,3 +128,46 @@ class AuditPage(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class SearchIn(BaseModel):
+    query: str = Field(min_length=1, max_length=1000)
+    business_line: BusinessLineCode | None = None
+    status: Literal["current", "history"] = "current"
+    page: int = Field(1, ge=1)
+
+
+class SearchHitOut(BaseModel):
+    id: uuid.UUID
+    document_id: uuid.UUID
+    version_id: uuid.UUID
+    title: str
+    folder_path: str
+    business_line: BusinessLineCode
+    version_label: str
+    version_status: VersionStatus
+    section: str | None
+    page: int | None
+    snippet: str
+    url: str
+    score: float
+    is_demo_fixture: bool
+
+
+class SearchOut(BaseModel):
+    items: list[SearchHitOut]
+    total: int
+    facets: dict[str, dict[str, int]]
+    mode: Literal["hybrid", "keyword_only"]
+    notes: list[str]
+
+
+class IngestionJobOut(BaseModel):
+    id: uuid.UUID
+    version_id: uuid.UUID
+    state: Literal["queued", "processing", "indexed", "failed"]
+    attempts: int
+    error: str | None
+    warning: str | None
+    chunk_count: int
+    duration_ms: int | None

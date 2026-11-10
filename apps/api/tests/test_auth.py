@@ -45,7 +45,10 @@ def test_me_requires_a_session_and_logout_ends_it(client_for, app):
 
 def test_tampered_session_cookie_is_rejected(client_for):
     client = client_for("staff")
-    client.cookies.set("bil_session", client.cookies.get("bil_session")[:-3] + "abc")
+    header, payload, signature = client.cookies.get("bil_session").split(".")
+    flipped = payload[:5] + ("A" if payload[5] != "A" else "B") + payload[6:]  # change the signed content itself
+    client.cookies.clear()  # otherwise the jar keeps the original valid cookie alongside the forged one
+    client.cookies.set("bil_session", f"{header}.{flipped}.{signature}")
     assert client.get("/auth/me").status_code == 401
 
 

@@ -19,7 +19,7 @@ from ..models import (
 )
 from ..schemas import DiffLine
 from ..storage import ObjectStore
-from . import audit
+from . import audit, ingestion
 
 ALLOWED_TYPES = {
     ".pdf": "application/pdf",
@@ -258,6 +258,7 @@ def approve_version(db: Session, actor: User, document_id: uuid.UUID, version_id
     db.flush()
     audit.record(db, actor_id=actor.id, event="version.approve", resource_type="version", resource_id=str(version.id),
                  detail={"document_id": str(document_id), "superseded": str(previous.id) if previous else None})
+    ingestion.enqueue(db, version.id)  # indexed after approval, never as a draft
     db.commit()
     return get_version(_load_document(db, document_id), actor, version_id)
 

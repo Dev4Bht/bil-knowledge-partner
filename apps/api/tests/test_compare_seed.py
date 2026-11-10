@@ -36,11 +36,11 @@ def test_file_is_served_inline_with_safe_headers(client_for, folders):
     assert "frame-ancestors" in response.headers["content-security-policy"]
 
 
-def test_capabilities_do_not_claim_unbuilt_features(client_for):
+def test_capabilities_report_what_is_built_and_do_not_claim_the_rest(client_for):
     caps = client_for("staff").get("/capabilities").json()
-    assert caps["dms"] is True
-    assert caps["extraction"] is False and caps["search"] is False and caps["llm"] is False
-    assert caps["notes"]
+    assert caps["dms"] is True and caps["extraction"] is True and caps["search"] is True
+    assert caps["llm"] is False and caps["translation"] is False  # the agent workflow is not built in this test setup
+    assert any("Search index:" in n for n in caps["notes"])
 
 
 def test_seed_creates_the_fictional_fixtures_and_is_idempotent(db, tmp_path):

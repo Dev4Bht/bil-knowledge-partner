@@ -1,13 +1,16 @@
 """What the running system can actually do. The UI reads this so it never pretends a feature exists."""
 
 import httpx
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 from .config import Settings
+from .models import IngestionJob, JobState
 from .schemas import CapabilitiesOut
 
 # Flipped to True only when the feature is built and tested (docs/progress.md).
-EXTRACTION_BUILT = False
-SEARCH_BUILT = False
+EXTRACTION_BUILT = True
+SEARCH_BUILT = True
 AGENTS_BUILT = False
 TRANSLATION_BUILT = False
 
@@ -25,14 +28,24 @@ def ollama_status(settings: Settings) -> tuple[bool, str | None, str | None]:
         return False, None, f"{type(exc).__name__}"
 
 
-def compute_capabilities(settings: Settings) -> CapabilitiesOut:
+def _has_model(settings: Settings, wanted: str) -> bool:
+    try:
+        response = httpx.get(f"{settings.ollama_base_url}/api/tags", timeout=1.5)
+        return any(m.get("name", "").split(":")[0] == wanted.split(":")[0] for m in response.json().get("models", []))
+    except Exception:
+        return False
+
+
+def compute_capabilities(settings: Settings, db: Session) -> CapabilitiesOut:
     reachable, model, error = ollama_status(settings)
     llm = reachable and model is not None
     notes: list[str] = []
-    if not EXTRACTION_BUILT:
-        notes.append("Text extraction is not built yet, so uploaded files are stored but not read.")
-    if not SEARCH_BUILT:
-        notes.append("The search index is not built yet.")
+    counts = dict(db.execute(select(IngestionJob.state, func.count()).group_by(IngestionJob.state)).all())
+    indexed, pending, failed = (counts.get(JobState.indexed, 0), counts.get(JobState.queued, 0) + counts.get(JobState.processing, 0),
+                                counts.get(JobState.failed, 0))
+    notes.append(f"Search index: {indexed} version(s) indexed, {pending} waiting, {failed} failed.")
+    if not _has_model(settings, settings.embedding_model):
+        notes.append(f"The embedding model '{settings.embedding_model}' is not available, so search is keyword-only.")
     if not reachable:
         notes.append("The local model server (Ollama) is not reachable.")
     elif model is None:

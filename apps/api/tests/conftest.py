@@ -42,7 +42,7 @@ def test_env(tmp_path_factory):
         "DATABASE_URL": dev_url.set(database=TEST_DB).render_as_string(hide_password=False),
         "OBJECT_STORE_BACKEND": "filesystem", "OBJECT_STORE_PATH": str(objects),
         "JWT_SECRET": "test-secret-test-secret-test-secret", "LOGIN_ATTEMPTS_PER_MINUTE": "1000",
-        "SEED_DEMO": "false", "DEMO_PASSWORD": "", "APP_ENV": "dev", "OLLAMA_BASE_URL": "http://127.0.0.1:9",
+        "RUN_WORKER": "false", "SEED_DEMO": "false", "DEMO_PASSWORD": "", "APP_ENV": "dev", "OLLAMA_BASE_URL": "http://127.0.0.1:9",
     }
     saved = {k: os.environ.get(k) for k in overrides}
     os.environ.update(overrides)
@@ -81,9 +81,13 @@ def app(db):
     from app.deps import _store_for
     from app.main import create_app
 
+    from app import deps
+
     get_settings.cache_clear()
     _store_for.cache_clear()
-    return create_app()
+    application = create_app()
+    application.dependency_overrides[deps.get_embedder] = lambda: FakeEmbedder()
+    return application
 
 
 @pytest.fixture
@@ -139,3 +143,28 @@ def settings_object_path(test_env):
     from pathlib import Path
 
     return Path(os.environ["OBJECT_STORE_PATH"])
+
+
+class FakeEmbedder:
+    """Deterministic bag-of-words embedder so search tests need no model. Shared words mean similar vectors."""
+
+    def embed(self, texts):
+        import hashlib
+        import math
+        import re
+
+        vectors = []
+        for text in texts:
+            vec = [0.0] * 1024
+            for word in re.findall(r"[a-z0-9]+", text.lower()):
+                vec[int(hashlib.md5(word.encode()).hexdigest(), 16) % 1024] += 1.0
+            norm = math.sqrt(sum(x * x for x in vec)) or 1.0
+            vectors.append([x / norm for x in vec])
+        return vectors
+
+
+class DownEmbedder:
+    def embed(self, texts):
+        from app.embeddings import EmbeddingUnavailable
+
+        raise EmbeddingUnavailable("model server is down")

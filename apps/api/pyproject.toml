@@ -33,4 +33,7 @@ packages = ["app"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["integration: needs the Postgres and MinIO services from infra/docker-compose.yml"]
+markers = [
+  "integration: needs the Postgres service from infra/docker-compose.yml",
+  "live_ollama: needs Ollama with the bge-m3 / qwen3 models pulled (skipped otherwise)",
+]

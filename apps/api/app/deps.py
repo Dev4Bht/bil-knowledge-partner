@@ -68,3 +68,9 @@ def login_limiter(settings: Settings = Depends(get_settings)) -> RateLimiter:
     if _login_limiter is None or _login_limiter.limit != settings.login_attempts_per_minute:
         _login_limiter = RateLimiter(settings.login_attempts_per_minute)
     return _login_limiter
+
+
+def get_embedder(settings: Settings = Depends(get_settings)):
+    from .embeddings import OllamaEmbedder
+
+    return OllamaEmbedder(settings.ollama_base_url, settings.embedding_model)

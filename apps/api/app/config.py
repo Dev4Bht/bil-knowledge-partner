@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     # Local LLM (Ollama runs on the host). Never a cloud API.
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen3:8b"
+    embedding_model: str = "bge-m3"
+    vector_max_distance: float = 0.65  # cosine distance above which a passage is treated as unrelated
+    run_worker: bool = True            # index approved documents in a background thread inside the API
 
     # Demo accounts and fictional fixtures: only ever created outside production.
     seed_demo: bool = False
