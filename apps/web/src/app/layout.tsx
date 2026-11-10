@@ -6,7 +6,7 @@ import "@fontsource-variable/source-sans-3";
 import "@fontsource-variable/noto-serif-tibetan";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { BOOT_SCRIPT } from "@/lib/boot-script";
 
 export const metadata: Metadata = {
   title: { default: "BIL Knowledge Partner", template: "%s | BIL Knowledge Partner" },
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: BOOT_SCRIPT }} />
       </head>
       <body className="min-h-dvh">
         <NuqsAdapter>

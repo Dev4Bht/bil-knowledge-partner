@@ -10,7 +10,7 @@ import { LogoMark, Wordmark } from "@/components/ui/logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommandPalette, CommandPaletteTrigger } from "./command-palette";
 import { CrumbProvider, useCrumb } from "./crumb";
-import { ThemeToggle } from "./theme-toggle";
+import { AppearanceMenu } from "./appearance-menu";
 import { UserMenu } from "./user-menu";
 
 type NavItem = { href: string; label: string; icon: ReactNode; match: (path: string) => boolean };
@@ -122,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Breadcrumb />
           <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-1 sm:gap-2 lg:flex-none lg:flex-initial">
             <CommandPaletteTrigger onOpen={() => setPaletteOpen(true)} />
-            <ThemeToggle />
+            <AppearanceMenu />
             <UserMenu />
           </div>
         </header>

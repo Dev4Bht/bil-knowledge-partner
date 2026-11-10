@@ -203,3 +203,11 @@ export const IconSend = (p: IconProps) => (
     <path d="m12 13.5 8-9.5" />
   </Svg>
 );
+
+export const IconPipette = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m14.5 5.5 4 4" />
+    <path d="M17 3.2a2.1 2.1 0 0 1 3 3L9.4 16.8a2 2 0 0 1-.9.5L4 18l.7-4.5c.1-.3.3-.6.5-.9L15.8 2.2" />
+    <path d="M4 18 3 21l3-1" />
+  </Svg>
+);

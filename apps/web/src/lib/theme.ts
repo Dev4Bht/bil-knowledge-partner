@@ -1,9 +1,10 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { THEME_KEY } from "./boot-script";
 
 export type ThemePreference = "system" | "light" | "dark";
-export const THEME_KEY = "bil-theme";
+export { THEME_KEY };
 const listeners = new Set<() => void>();
 
 function read(): ThemePreference {
@@ -44,6 +45,3 @@ function subscribe(listener: () => void) {
 export function useThemePreference(): ThemePreference {
   return useSyncExternalStore(subscribe, read, () => "system");
 }
-
-/** Inline script run before hydration so a saved choice never flashes the wrong theme. */
-export const THEME_BOOT_SCRIPT = `try{var t=localStorage.getItem("${THEME_KEY}");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}`;
