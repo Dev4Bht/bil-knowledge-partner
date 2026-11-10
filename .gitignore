@@ -24,3 +24,4 @@ data/raw/
 
 # DMS runtime data (uploaded documents and database)
 data/dms/
+data/objects/

@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 from .config import get_settings
 from .db import get_engine
-from .storage import ObjectStore
+from .storage import build_object_store
 
 
 def check_database() -> dict:
@@ -38,7 +38,7 @@ def create_app() -> FastAPI:
     @app.get("/ready")
     def ready():
         """Readiness: the database and object store are reachable."""
-        checks = {"database": check_database(), "object_store": ObjectStore(settings).check()}
+        checks = {"database": check_database(), "object_store": build_object_store(settings).check()}
         ok = all(c["ok"] for c in checks.values())
         return JSONResponse({"status": "ready" if ok else "not_ready", "checks": checks}, status_code=200 if ok else 503)
 

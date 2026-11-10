@@ -1,0 +1,65 @@
+# Run from the repository root:
+#   cp .env.example .env            # then edit the passwords
+#   docker compose --env-file .env -f infra/docker-compose.yml up -d postgres
+#   docker compose --env-file .env -f infra/docker-compose.yml up -d --build      # adds the api
+#   docker compose --env-file .env -f infra/docker-compose.yml --profile opensearch up -d   # optional OpenSearch
+#
+# Original documents are stored on a local volume by default. MinIO's official container images are no
+# longer published on Docker Hub or Quay, so no object-store container is included; see docs/decisions.md.
+name: bil
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16          # PostgreSQL 16 with the pgvector extension
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5440}:5432"   # localhost only; 5440 avoids clashing with other local databases
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Optional, heavier search backend. The default backend is PostgreSQL full-text + pgvector
+  # (see docs/decisions.md). Development only: the security plugin is disabled.
+  opensearch:
+    profiles: ["opensearch"]
+    image: opensearchproject/opensearch:2.17.1
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+      bootstrap.memory_lock: "true"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+    ports:
+      - "127.0.0.1:9200:9200"
+    volumes:
+      - osdata:/usr/share/opensearch/data
+
+  api:
+    build: ../apps/api
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      OBJECT_STORE_BACKEND: filesystem
+      OBJECT_STORE_PATH: /data/objects
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - objects:/data/objects
+
+volumes:
+  pgdata:
+  objects:
+  osdata:

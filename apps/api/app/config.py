@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -13,13 +14,17 @@ class Settings(BaseSettings):
 
     app_env: str = "dev"
     database_url: str = "postgresql+psycopg://bil:bil_dev_password@localhost:5432/bil"
-    minio_endpoint: str = "localhost:9000"
-    minio_access_key: str = "bil_minio"
-    minio_secret_key: str = "bil_minio_dev_secret"
-    minio_bucket: str = "bil-documents"
-    minio_secure: bool = False
     web_origin: str = "http://localhost:3000"
     jwt_secret: str = _DEV_SECRET
+
+    # Original documents: local filesystem by default, or any S3-compatible server.
+    object_store_backend: Literal["filesystem", "s3"] = "filesystem"
+    object_store_path: str = "data/objects"
+    s3_endpoint: str = "localhost:9000"
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
+    s3_bucket: str = "bil-documents"
+    s3_secure: bool = False
 
     @model_validator(mode="after")
     def _refuse_dev_secret_in_production(self) -> "Settings":
