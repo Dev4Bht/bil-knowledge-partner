@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from ..embeddings import Embedder, EmbeddingUnavailable
 from ..extraction import chunk_sections, extract
 from ..models import DocumentChunk, DocumentVersion, IngestionJob, JobState, QualityFlag, VersionStatus
+from ..source import DocumentSource, LocalDMSAdapter
 from ..storage import ObjectStore
 
 MAX_ATTEMPTS = 3
@@ -64,7 +65,9 @@ def process_job(db: Session, store: ObjectStore, embedder: Embedder, job: Ingest
         if version is None:
             raise ValueError("The version no longer exists")
         title = version.document.title
-        extraction = extract(version.mime_type, store.get(version.object_key))
+        source: DocumentSource = LocalDMSAdapter(db, store)  # the knowledge layer reads documents only through the adapter
+        data = b"".join(source.get_document_stream(str(version.document_id), str(version.id)))
+        extraction = extract(version.mime_type, data)
         chunks = chunk_sections(extraction.sections)
         if not chunks:
             raise ValueError("No readable text was found in this file")
