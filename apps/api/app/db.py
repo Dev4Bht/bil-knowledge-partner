@@ -17,6 +17,15 @@ def get_engine():
     return _engine
 
 
+def reset_engine() -> None:
+    """Drop the cached engine so the next use re-reads settings (used by tests)."""
+    global _engine, _session_factory
+    if _engine is not None:
+        _engine.dispose()
+    _engine = None
+    _session_factory = None
+
+
 def get_db() -> Iterator[Session]:
     get_engine()
     with _session_factory() as session:

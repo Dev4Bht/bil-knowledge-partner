@@ -1,5 +1,7 @@
 """Needs the Postgres service: docker compose --env-file .env -f infra/docker-compose.yml up -d postgres"""
 
+import uuid
+
 import pytest
 from alembic import command
 from alembic.config import Config
@@ -42,10 +44,12 @@ def db(migrated_engine):
 
 
 def _document(db) -> Document:
-    line = BusinessLine(code=BusinessLineCode.general_insurance, name="General Insurance")
-    db.add(line)
-    db.flush()
-    folder = Folder(name="Handbooks", business_line_id=line.id)
+    line = db.query(BusinessLine).filter_by(code=BusinessLineCode.general_insurance).one_or_none()
+    if line is None:
+        line = BusinessLine(code=BusinessLineCode.general_insurance, name="General Insurance")
+        db.add(line)
+        db.flush()
+    folder = Folder(name=f"Handbooks-{uuid.uuid4().hex[:8]}", business_line_id=line.id)
     db.add(folder)
     db.flush()
     doc = Document(title="Motor Handbook", business_line_id=line.id, folder_id=folder.id)

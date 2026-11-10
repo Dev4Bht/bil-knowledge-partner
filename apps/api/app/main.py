@@ -1,10 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from .config import get_settings
 from .db import get_engine
+from .errors import ApiError
+from .routers import auth, catalog, documents, system
 from .storage import build_object_store
 
 
@@ -27,8 +29,15 @@ def create_app() -> FastAPI:
         allow_origins=[settings.web_origin],
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-        allow_headers=["Authorization", "Content-Type"],
+        allow_headers=["Content-Type", "X-Requested-With"],
     )
+
+    @app.exception_handler(ApiError)
+    async def api_error_handler(_request: Request, exc: ApiError):
+        return JSONResponse({"detail": exc.message, "code": exc.code}, status_code=exc.status_code)
+
+    for router in (auth.router, catalog.router, documents.router, system.router):
+        app.include_router(router)
 
     @app.get("/health")
     def health() -> dict:

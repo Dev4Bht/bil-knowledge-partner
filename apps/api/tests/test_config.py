@@ -4,7 +4,8 @@ from pydantic import ValidationError
 from app.config import Settings
 
 
-def test_production_refuses_the_dev_secret():
+def test_production_refuses_the_dev_secret(monkeypatch):
+    monkeypatch.delenv("JWT_SECRET", raising=False)
     with pytest.raises(ValidationError):
         Settings(_env_file=None, app_env="production")
 

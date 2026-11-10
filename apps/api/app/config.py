@@ -16,6 +16,18 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://bil:bil_dev_password@localhost:5440/bil"
     web_origin: str = "http://localhost:3470"
     jwt_secret: str = _DEV_SECRET
+    session_ttl_seconds: int = 8 * 3600
+    cookie_secure: bool = False  # set true when served over HTTPS
+    max_upload_mb: int = 25
+    login_attempts_per_minute: int = 8
+
+    # Local LLM (Ollama runs on the host). Never a cloud API.
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "qwen3:8b"
+
+    # Demo accounts and fictional fixtures: only ever created outside production.
+    seed_demo: bool = False
+    demo_password: str = ""
 
     # Original documents: local filesystem by default, or any S3-compatible server.
     object_store_backend: Literal["filesystem", "s3"] = "filesystem"
