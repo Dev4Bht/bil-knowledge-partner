@@ -20,6 +20,9 @@ from .synonyms import expand
 
 RRF_K = 60
 CANDIDATES = 30
+RARE_FRACTION = 0.03  # a question word found in at most this share of the passages is treated as a rare, decisive word
+MAX_RARE_TERMS = 3
+RARE_LIST = 10
 
 
 @dataclass
@@ -86,6 +89,26 @@ def _keyword_query(query: str, use_synonyms: bool) -> str | None:
     return " | ".join(tokens) if tokens else None
 
 
+def rare_terms(db: Session, version_ids: list[uuid.UUID], query: str, *, fraction: float = RARE_FRACTION, limit: int = MAX_RARE_TERMS) -> list[str]:
+    """Question words that appear in few passages ("flood", "hailstorm") as opposed to most of them ("insurance").
+
+    The keyword query ORs every word and ranks by how many match, so passages stuffed with common words can outrank
+    the short passage that holds the one decisive word. Giving each rare word its own ranking in the fusion fixes
+    that, the same idea as inverse document frequency in BM25."""
+    total = db.execute(select(func.count()).select_from(DocumentChunk).where(DocumentChunk.version_id.in_(version_ids))).scalar_one()
+    if not total:
+        return []
+    cutoff = max(3, int(total * fraction))
+    found: list[tuple[int, str]] = []
+    for token in dict.fromkeys(re.findall(r"[a-z]{3,}", query.lower())):
+        matching = db.execute(select(func.count()).select_from(DocumentChunk).where(
+            DocumentChunk.version_id.in_(version_ids), DocumentChunk.tsv.op("@@")(func.plainto_tsquery("english", token)),
+        )).scalar_one()  # stop words give an empty query and match nothing
+        if 0 < matching <= cutoff:
+            found.append((matching, token))
+    return [token for _, token in sorted(found)[:limit]]
+
+
 def hybrid_search(
     db: Session, user: User, embedder: Embedder, query: str, *, vector_max_distance: float,
     business_line: BusinessLineCode | None = None, include_history: bool = False, limit: int = 8,
@@ -120,8 +143,15 @@ def hybrid_search(
         meta.mode = "keyword_only"
         meta.notes.append(f"Semantic search is unavailable ({exc}); using keyword search only")
 
+    rare_rankings: list[list[uuid.UUID]] = []
+    for term in rare_terms(db, version_ids, query):
+        tsq = func.plainto_tsquery("english", term)
+        rows = db.execute(select(DocumentChunk.id).where(DocumentChunk.version_id.in_(version_ids), DocumentChunk.tsv.op("@@")(tsq))
+                          .order_by(desc(func.ts_rank_cd(DocumentChunk.tsv, tsq))).limit(RARE_LIST)).all()
+        rare_rankings.append([row.id for row in rows])
+
     fused: dict[uuid.UUID, float] = {}
-    for ranking in (sorted(keyword, key=keyword.get, reverse=True), sorted(vector, key=vector.get)):
+    for ranking in (sorted(keyword, key=keyword.get, reverse=True), sorted(vector, key=vector.get), *rare_rankings):
         for position, chunk_id in enumerate(ranking, start=1):
             fused[chunk_id] = fused.get(chunk_id, 0.0) + 1.0 / (RRF_K + position)
     top = sorted(fused, key=fused.get, reverse=True)[:limit]

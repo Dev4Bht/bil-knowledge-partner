@@ -169,3 +169,40 @@ def test_real_bge_m3_finds_flood_when_the_question_says_natural_calamity(db, sto
                                vector_max_distance=settings.vector_max_distance, use_synonyms=False)
     assert meta.mode == "hybrid"
     assert hits[0].title == "Motor Insurance Handbook" and hits[0].section_label == "4.1"
+
+
+def _add_text_doc(client, folder_id, title, text):
+    created = upload(client, folder_id, title=title, content=(text + "\n").encode(), filename=f"{title}.txt")
+    assert created.status_code == 201, created.text
+    document = created.json()
+    assert client.post(f"/documents/{document['id']}/versions/{document['versions'][0]['id']}/approve").status_code == 200
+
+
+def test_a_rare_word_in_the_question_is_not_drowned_out_by_common_words(db, store, client_for, folders):
+    """The real R01 failure: 'flood' appears in a handful of passages but 'motor insurance cover' in hundreds, so a
+    passage that merely repeats the common words outranked the short list that actually says 'Flood'."""
+    admin = client_for("admin")
+    folder = folders["general_insurance/Handbooks"]
+    for n in range(14):  # many passages stuffed with the question's common words
+        _add_text_doc(admin, folder, f"Motor overview {n}",
+                      f"## Motor insurance cover {n}\nMotor insurance cover applies to a motor vehicle. Motor insurance policy cover and motor insurance rules {n}.")
+    _add_text_doc(admin, folder, "Comprehensive coverage list", "## Coverage\n- Accidental\n- Flood, typhoon, hurricane, storm\n- Burglary or theft")
+    index_all(db, store)
+    hits, _ = search(db, user_named(db, "admin@test.bil"), "Does motor insurance cover flood damage?", limit=3)
+    assert "Comprehensive coverage list" in [h.title for h in hits]  # the passage with the rare word is in the top three
+
+
+def test_common_question_words_do_not_get_their_own_ranking(db, store, client_for, folders):
+    from app.search import rare_terms
+
+    admin = client_for("admin", email="admin2@test.bil")
+    folder = folders["general_insurance/Handbooks"]
+    for n in range(40):
+        _add_text_doc(admin, folder, f"Doc {n}", f"## Section {n}\nInsurance policy cover applies. Insurance rules {n}.")
+    _add_text_doc(admin, folder, "Special", "## Special\nA hailstorm rider is available.")
+    index_all(db, store)
+    from app.search import eligible_versions
+
+    ids = list(eligible_versions(db, user_named(db, "admin2@test.bil"), business_line=None, include_history=False))
+    terms = rare_terms(db, ids, "Does insurance cover a hailstorm rider?")
+    assert "hailstorm" in terms and "insurance" not in terms and "cover" not in terms
