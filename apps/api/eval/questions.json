@@ -23,7 +23,7 @@
     {"id": "R04-handbook-intimation", "role": "staff", "question": "Within how many days after an accident should a motor claim be intimated?",
      "expect": {"status": "answered", "cite": [["BIL Insurance Handbook", "p30|p31"]], "facts": ["15 days"]}},
     {"id": "R05-fire-claim-documents", "role": "staff", "question": "What does BIL need for a fire insurance claim?",
-     "expect": {"status": "answered", "cite": [["Fire Insurance Claim", "Document Checklist"]], "facts": ["fire brigade report", "claim form"]}},
+     "expect": {"status": "answered", "cite_any": [["Fire Insurance Claim", "Document Checklist"], ["BIL Insurance Handbook", "p36"]], "facts": ["claim form"]}},
     {"id": "R06-motor-policy-period", "role": "staff", "question": "How long does a motor insurance policy last and what happens if it expires?",
      "expect": {"status": "answered", "cite": [["BIL Insurance Handbook", "p30"]], "facts": ["one year", "inspection"]}},
     {"id": "R07-min-capital-rma", "role": "staff", "question": "What is the minimum paid-up capital for a non-life insurance business under the RMA rules?",

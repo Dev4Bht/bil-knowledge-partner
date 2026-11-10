@@ -135,11 +135,15 @@ def evaluate(api: str, password: str, only: set[str] | None = None) -> dict:
         cites = result["citations"]
         blob = json.dumps(result).lower()
         row["checks"]["status_ok"] = result["status"] == e["status"]
-        if e.get("cite"):
+        if e.get("cite") or e.get("cite_any"):
             hits = client.request("POST", "/search", {"query": q["question"], "status": "history" if q.get("include_history") else "current"})
             top = [(h["title"], h["section"], h["page"]) for h in hits.get("items", [])][:8]
-            row["recall_at_8"] = sum(1 for want in e["cite"] if any(matches(want, *t) for t in top)) / len(e["cite"])
-            row["checks"]["citations_present"] = all(any(matches(want, c["title"], c["section"], c["page"]) for c in cites) for want in e["cite"])
+            if e.get("cite"):  # every listed passage is required
+                row["recall_at_8"] = sum(1 for want in e["cite"] if any(matches(want, *t) for t in top)) / len(e["cite"])
+                row["checks"]["citations_present"] = all(any(matches(want, c["title"], c["section"], c["page"]) for c in cites) for want in e["cite"])
+            else:  # cite_any: several sources legitimately answer the question; one of them is enough
+                row["recall_at_8"] = 1.0 if any(matches(want, *t) for want in e["cite_any"] for t in top) else 0.0
+                row["checks"]["citations_present"] = any(matches(want, c["title"], c["section"], c["page"]) for want in e["cite_any"] for c in cites)
         if cites:
             row["checks"]["citations_resolve"] = all(client.status_and_text(c["url"].split("#")[0])[0] == 200 for c in cites)
         if e.get("facts"):
