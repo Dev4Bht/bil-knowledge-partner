@@ -211,3 +211,20 @@ export const IconPipette = (p: IconProps) => (
     <path d="M4 18 3 21l3-1" />
   </Svg>
 );
+
+export const IconTrash = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+  </Svg>
+);
+export const IconPencil = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m4 20 1-4L16.5 4.5a2 2 0 0 1 3 3L8 19l-4 1Z" />
+    <path d="m14.5 6.5 3 3" />
+  </Svg>
+);
+export const IconChat = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12Z" />
+  </Svg>
+);

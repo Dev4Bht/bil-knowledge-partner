@@ -156,3 +156,17 @@ export type SearchResponse = {
   total: number;
   facets: { business_line: Record<string, number> };
 };
+
+// ---- Saved chats
+export type ConversationSummary = { id: string; title: string; created_at: string; updated_at: string; question_count: number };
+export type ConversationMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  created_at: string;
+  /** The answer exactly as it was shown, re-checked by the server against what the user may open today. */
+  result: AskResponse | null;
+  /** Why a saved answer may be out of date, or why its text is hidden. */
+  notices: string[];
+};
+export type ConversationDetail = { id: string; title: string; created_at: string; updated_at: string; messages: ConversationMessage[] };

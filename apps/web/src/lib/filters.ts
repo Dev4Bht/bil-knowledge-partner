@@ -21,6 +21,8 @@ export const askFilters = {
   businessLine: parseAsStringLiteral(BUSINESS_LINE_VALUES),
   language: parseAsStringLiteral(LANGUAGE_VALUES).withDefault("en"),
   status: parseAsStringLiteral(STATUS_VALUES),
+  /** The open saved chat, so a refresh or a bookmark returns to it. */
+  chat: parseAsString,
 };
 
 export type StatusValue = (typeof STATUS_VALUES)[number];

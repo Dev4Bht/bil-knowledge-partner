@@ -5,6 +5,8 @@ import type {
   BusinessLine,
   Capabilities,
   CompareResult,
+  ConversationDetail,
+  ConversationSummary,
   DocumentDetail,
   DocumentPage,
   DocVersion,
@@ -37,7 +39,7 @@ export function onUnauthorized(listener: Listener): () => void {
 }
 
 type RequestOptions = {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   json?: unknown;
   form?: FormData;
   query?: Record<string, string | number | boolean | null | undefined>;
@@ -162,3 +164,11 @@ export const askQuestion = (body: AskRequest, signal?: AbortSignal) =>
   request<AskResponse>("/chat/ask", { method: "POST", json: body, signal });
 export const searchDocuments = (body: SearchRequest, signal?: AbortSignal) =>
   request<SearchResponse>("/search", { method: "POST", json: body, signal });
+
+// ---- Saved chats (each user sees only their own)
+export const listConversations = (signal?: AbortSignal) => request<ConversationSummary[]>("/chat/conversations", { signal });
+export const getConversation = (id: string, signal?: AbortSignal) => request<ConversationDetail>(`/chat/conversations/${id}`, { signal });
+export const renameConversation = (id: string, title: string) =>
+  request<ConversationSummary>(`/chat/conversations/${id}`, { method: "PATCH", json: { title } });
+export const deleteConversation = (id: string) => request<void>(`/chat/conversations/${id}`, { method: "DELETE" });
+export const deleteAllConversations = () => request<void>("/chat/conversations", { method: "DELETE" });
