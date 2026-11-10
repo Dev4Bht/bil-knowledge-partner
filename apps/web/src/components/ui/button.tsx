@@ -46,14 +46,13 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
   );
 });
 
-export function IconButton({
-  label,
-  children,
-  className,
-  ...rest
-}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
+export const IconButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { label: string }>(function IconButton(
+  { label, children, className, ...rest },
+  ref,
+) {
   return (
     <button
+      ref={ref}
       type="button"
       aria-label={label}
       title={label}
@@ -66,4 +65,4 @@ export function IconButton({
       {children}
     </button>
   );
-}
+});
