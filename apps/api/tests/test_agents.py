@@ -476,6 +476,30 @@ def test_a_real_numeric_conflict_between_documents_still_counts():
     assert len(verified_conflicts(out, evidence)) == 1
 
 
+def test_differently_worded_list_items_without_figures_are_not_a_conflict():
+    """R05: 'Original estimate of the loss' (handbook) and "Engineer's Estimation of Loss/Damage" (web checklist) are
+    list items, not incompatible values, and must not block the checklist answer."""
+    from app.agents.models import ConflictItem, ConflictOut
+    from app.agents.nodes import verified_conflicts
+
+    evidence = [_evidence("E1", "Handbook", "Documents: claim form, original estimate of the loss, fire brigade report."),
+                _evidence("E2", "Fire claim page", "Checklist: claim form, Engineer's Estimation of Loss/ Damage.")]
+    out = ConflictOut(conflicts=[ConflictItem(topic="loss estimate", evidence_id_a="E1", quote_a="original estimate of the loss",
+                                              evidence_id_b="E2", quote_b="Engineer's Estimation of Loss/ Damage")])
+    assert verified_conflicts(out, evidence) == []
+
+
+def test_a_code_the_documents_never_mention_cannot_be_answered():
+    """C5: 'QW-77' appears in no accessible passage, so loosely related passages must not be used to answer."""
+    from app.agents.nodes import missing_identifiers
+
+    evidence = [_evidence("E1", "Complaints Rules", "FSPs shall settle complaints within 45 working days. See section 3.2.6 and form GI-12.")]
+    assert missing_identifiers("Who handles escalations of type QW-77 and how fast?", evidence) == ["QW-77"]
+    assert missing_identifiers("What is form GI-12 for?", evidence) == []          # present, even with different punctuation
+    assert missing_identifiers("What does section 3.2.6 say in 2019?", evidence) == []  # plain numbers are not codes
+    assert missing_identifiers("How long do I have under 45 days?", evidence) == []
+
+
 def test_a_passage_with_a_rare_word_from_the_question_survives_a_poor_selection():
     """R01: the selector kept the overview and dropped the 'Coverage' list that actually says flood."""
     from app.agents.nodes import _with_distinctive_passages
@@ -487,3 +511,11 @@ def test_a_passage_with_a_rare_word_from_the_question_survives_a_poor_selection(
                 _evidence("E5", "Handbook", "Motor insurance policy lasts one year.")]
     kept = _with_distinctive_passages("Does BIL's comprehensive motor insurance cover flood damage?", [evidence[0]], evidence)
     assert [e["id"] for e in kept] == ["E1", "E2"]  # "flood" is rare so E2 returns; "motor" and "comprehensive" are everywhere, so they add nothing
+
+
+def test_escaping_copied_from_the_evidence_fence_is_undone_in_the_answer():
+    from app.agents.nodes import _plain_text
+
+    synth = {"answerable": True, "claims": [{"text": "Storm &amp; flood &lt;covered&gt;", "evidence_ids": ["E1"]}], "missing_info": "Not in A &amp; B"}
+    out = _plain_text(synth)
+    assert out["claims"][0]["text"] == "Storm & flood <covered>" and out["missing_info"] == "Not in A & B"

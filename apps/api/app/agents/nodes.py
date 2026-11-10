@@ -4,6 +4,7 @@ Each node returns a partial state update. Nothing here decides access rights: re
 query, and the verifier re-checks every cited version before it can appear in an answer.
 """
 
+import html
 import re
 import time
 from dataclasses import dataclass
@@ -168,7 +169,9 @@ def verified_conflicts(out: ConflictOut, evidence: list[dict]) -> list[dict]:
         if qa == qb or qa in qb or qb in qa:
             continue  # the same words, or one merely more detailed than the other
         figures_a, figures_b = _numbers(item.quote_a), _numbers(item.quote_b)
-        if figures_a and figures_b and figures_a == figures_b:
+        if not (figures_a and figures_b):
+            continue  # only differences in figures (days, amounts, dates) are proven; two differently worded list items are not
+        if figures_a == figures_b:
             continue  # worded differently but stating the same figures: not a conflict
         if _about_itself(a["text"], qa) and _about_itself(b["text"], qb):
             continue  # each document is stating its OWN date, scope or status
@@ -258,6 +261,27 @@ def _with_distinctive_passages(question: str, picked: list[dict], evidence: list
     return ordered
 
 
+_IDENTIFIER = re.compile(r"\b(?=[A-Za-z0-9-]*[A-Za-z])(?=[A-Za-z0-9-]*\d)[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*\b")
+
+
+def missing_identifiers(question: str, evidence: list[dict]) -> list[str]:
+    """Codes the question names (such as "QW-77" or "GI12") that appear in none of the retrieved passages. The documents
+    cannot answer a question about a code they never mention, however close the other passages sound."""
+    haystack = re.sub(r"[^a-z0-9]", "", " ".join(e["text"] + e["title"] for e in evidence).lower())
+    return [code for code in dict.fromkeys(_IDENTIFIER.findall(question))
+            if re.sub(r"[^a-z0-9]", "", code.lower()) not in haystack]
+
+
+def _plain_text(synth: dict) -> dict:
+    """Passages are HTML-escaped before the model sees them (so a passage cannot close the evidence fence), and the
+    model tends to copy that escaping into its answer ('&amp;'). The answer is shown as plain text, so undo it."""
+    for claim in synth.get("claims", []):
+        claim["text"] = html.unescape(claim["text"])
+    if synth.get("missing_info"):
+        synth["missing_info"] = html.unescape(synth["missing_info"])
+    return synth
+
+
 def _conflict_claims(state: dict) -> dict:
     """When documents genuinely disagree the write-up is built from the verified quotes themselves, with no model
     in the loop: each side is stated exactly as the document says it, with its own citation."""
@@ -279,6 +303,10 @@ def synthesis(state: dict, ctx: Ctx) -> dict:
         return {"synth": synth, "steps": _step("Synthesis", f"{len(synth['claims'])} conflicting statement(s) quoted from the documents", started)}
 
     evidence = state["evidence"]
+    unknown = missing_identifiers(state["question"], evidence)
+    if unknown:
+        return {"synth": {"answerable": False, "claims": [], "missing_info": f"The approved documents do not mention {', '.join(unknown)}."},
+                "steps": _step("Synthesis", f"the question names {', '.join(unknown)}, which no retrieved passage mentions", started)}
     narrowed = evidence
     try:  # keep only the passages that help answer; fall back to everything if the choice is unusable
         listing = "\n".join(f"{e['id']} [{e['title']}, {e['section'] or e['version_label']}]: {e['text'][:260].replace(chr(10), ' ')}" for e in evidence)
@@ -292,7 +320,7 @@ def synthesis(state: dict, ctx: Ctx) -> dict:
         pass
     prompt = f"Staff question: {state['question']}\n\n{prompts.render_evidence(narrowed)}"
     try:
-        synth = _structured(ctx, SynthOut, prompts.SYNTHESIS, prompt, 1500).model_dump()
+        synth = _plain_text(_structured(ctx, SynthOut, prompts.SYNTHESIS, prompt, 1500).model_dump())
         summary = f"{len(synth['claims'])} claim(s) drafted from {len(narrowed)} of {len(evidence)} passage(s)"
     except LLMUnavailable:
         return {"llm_down": True, "synth": None, "steps": _step("Synthesis", "language model unavailable", started)}
