@@ -1,23 +1,23 @@
 {
   "summary": {
     "questions": 18,
-    "fully_passed": 11,
-    "real_document_questions_fully_passed": "6/12",
-    "control_questions_fully_passed": "5/6",
+    "fully_passed": 16,
+    "real_document_questions_fully_passed": "10/12",
+    "control_questions_fully_passed": "6/6",
     "status_ok": {
-      "passed": 14,
+      "passed": 18,
       "of": 18
     },
     "citations_present": {
-      "passed": 11,
+      "passed": 12,
       "of": 14
     },
     "citations_resolve": {
-      "passed": 12,
-      "of": 12
+      "passed": 14,
+      "of": 14
     },
     "key_facts": {
-      "passed": 11,
+      "passed": 13,
       "of": 14
     },
     "multi_document": {
@@ -41,25 +41,25 @@
       "of": 4
     },
     "english_draft": {
-      "passed": 10,
+      "passed": 13,
       "of": 13
     },
-    "recall_at_8_mean": 1.0,
-    "groundedness_proxy_mean_text_sources": 0.984,
-    "latency_mean_s": 25.0,
-    "latency_median_s": 18.2,
-    "latency_max_s": 107.8
+    "recall_at_8_mean": 0.964,
+    "groundedness_proxy_mean_text_sources": 0.903,
+    "latency_mean_s": 30.7,
+    "latency_median_s": 23.2,
+    "latency_max_s": 110.3
   },
   "rows": [
     {
       "id": "R01-flood-comprehensive",
-      "latency_s": 31.1,
+      "latency_s": 38.4,
       "status": "answered",
       "checks": {
         "status_ok": true,
-        "citations_present": true,
+        "citations_present": false,
         "citations_resolve": true,
-        "key_facts": false,
+        "key_facts": true,
         "current_versions_only": true,
         "english_draft": true
       },
@@ -69,7 +69,7 @@
     },
     {
       "id": "R02-third-party-mandatory",
-      "latency_s": 12.2,
+      "latency_s": 22.9,
       "status": "answered",
       "checks": {
         "status_ok": true,
@@ -84,7 +84,7 @@
     },
     {
       "id": "R03-motor-claim-documents",
-      "latency_s": 17.9,
+      "latency_s": 110.3,
       "status": "answered",
       "checks": {
         "status_ok": true,
@@ -94,39 +94,41 @@
         "english_draft": true
       },
       "recall_at_8": 1.0,
-      "groundedness_text_sources": 1.0,
+      "groundedness_text_sources": 0.902,
       "passed": true
     },
     {
       "id": "R04-handbook-intimation",
-      "latency_s": 12.7,
+      "latency_s": 23.5,
       "status": "answered",
       "checks": {
         "status_ok": true,
-        "citations_present": false,
+        "citations_present": true,
         "citations_resolve": true,
         "key_facts": true,
         "english_draft": true
       },
       "recall_at_8": 1.0,
-      "passed": false
+      "passed": true
     },
     {
       "id": "R05-fire-claim-documents",
-      "latency_s": 107.8,
-      "status": "no_evidence",
+      "latency_s": 89.4,
+      "status": "answered",
       "checks": {
-        "status_ok": false,
-        "citations_present": false,
-        "key_facts": false,
-        "english_draft": false
+        "status_ok": true,
+        "citations_present": true,
+        "citations_resolve": true,
+        "key_facts": true,
+        "english_draft": true
       },
       "recall_at_8": 1.0,
-      "passed": false
+      "groundedness_text_sources": 0.845,
+      "passed": true
     },
     {
       "id": "R06-motor-policy-period",
-      "latency_s": 18.9,
+      "latency_s": 26.7,
       "status": "answered",
       "checks": {
         "status_ok": true,
@@ -140,35 +142,35 @@
     },
     {
       "id": "R07-min-capital-rma",
-      "latency_s": 23.3,
-      "status": "conflict",
+      "latency_s": 37.6,
+      "status": "answered",
       "checks": {
-        "status_ok": false,
+        "status_ok": true,
         "citations_present": true,
         "citations_resolve": true,
         "key_facts": true,
-        "english_draft": false
+        "english_draft": true
       },
       "recall_at_8": 1.0,
-      "passed": false
+      "passed": true
     },
     {
       "id": "R08-rules-effective-date",
-      "latency_s": 19.0,
-      "status": "conflict",
+      "latency_s": 23.5,
+      "status": "answered",
       "checks": {
-        "status_ok": false,
+        "status_ok": true,
         "citations_present": true,
         "citations_resolve": true,
         "key_facts": true,
-        "english_draft": false
+        "english_draft": true
       },
       "recall_at_8": 1.0,
-      "passed": false
+      "passed": true
     },
     {
       "id": "R09-complaint-timelines",
-      "latency_s": 18.5,
+      "latency_s": 27.7,
       "status": "answered",
       "checks": {
         "status_ok": true,
@@ -182,23 +184,23 @@
     },
     {
       "id": "R10-flood-claim-two-sources",
-      "latency_s": 70.9,
+      "latency_s": 24.7,
       "status": "answered",
       "checks": {
         "status_ok": true,
-        "citations_present": true,
+        "citations_present": false,
         "citations_resolve": true,
         "key_facts": false,
         "multi_document": true,
         "english_draft": true
       },
-      "recall_at_8": 1.0,
-      "groundedness_text_sources": 0.889,
+      "recall_at_8": 0.5,
+      "groundedness_text_sources": 0.912,
       "passed": false
     },
     {
       "id": "R11-unsupported-premium",
-      "latency_s": 14.3,
+      "latency_s": 22.7,
       "status": "no_evidence",
       "checks": {
         "status_ok": true,
@@ -208,7 +210,7 @@
     },
     {
       "id": "R12-unsupported-share-price",
-      "latency_s": 13.9,
+      "latency_s": 17.8,
       "status": "no_evidence",
       "checks": {
         "status_ok": true,
@@ -218,7 +220,7 @@
     },
     {
       "id": "C1-current-version",
-      "latency_s": 12.1,
+      "latency_s": 17.8,
       "status": "answered",
       "checks": {
         "status_ok": true,
@@ -236,7 +238,7 @@
     },
     {
       "id": "C2-history-version",
-      "latency_s": 12.6,
+      "latency_s": 18.5,
       "status": "answered",
       "checks": {
         "status_ok": true,
@@ -247,25 +249,27 @@
         "english_draft": true
       },
       "recall_at_8": 1.0,
-      "groundedness_text_sources": 1.0,
+      "groundedness_text_sources": 0.75,
       "passed": true
     },
     {
       "id": "C3-conflict",
-      "latency_s": 18.6,
-      "status": "no_evidence",
+      "latency_s": 13.8,
+      "status": "conflict",
       "checks": {
-        "status_ok": false,
-        "citations_present": false,
+        "status_ok": true,
+        "citations_present": true,
+        "citations_resolve": true,
         "key_facts": true,
         "no_draft_on_conflict": true
       },
       "recall_at_8": 1.0,
-      "passed": false
+      "groundedness_text_sources": 0.714,
+      "passed": true
     },
     {
       "id": "C4-draft-hidden",
-      "latency_s": 22.4,
+      "latency_s": 9.7,
       "status": "no_evidence",
       "checks": {
         "status_ok": true,
@@ -276,7 +280,7 @@
     },
     {
       "id": "C5-restricted-denied-staff",
-      "latency_s": 12.7,
+      "latency_s": 10.2,
       "status": "no_evidence",
       "checks": {
         "status_ok": true,
@@ -288,7 +292,7 @@
     },
     {
       "id": "C6-restricted-allowed-manager",
-      "latency_s": 11.0,
+      "latency_s": 16.9,
       "status": "answered",
       "checks": {
         "status_ok": true,
