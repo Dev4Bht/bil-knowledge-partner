@@ -43,7 +43,10 @@ services:
       - osdata:/usr/share/opensearch/data
 
   api:
-    build: ../apps/api
+    build:
+      context: ../apps/api
+      args:
+        WITH_TRANSLATION: ${WITH_TRANSLATION:-false}
     depends_on:
       postgres: { condition: service_healthy }
     environment:
