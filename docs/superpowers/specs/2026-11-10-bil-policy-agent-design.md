@@ -1,5 +1,7 @@
 # BIL Agentic Knowledge Partner: Design (DRAFT v2 for review)
 
+> **SUPERSEDED (2026-11-10).** The owner supplied `CLAUDE.md` as the primary specification. It requires a different stack (Next.js, PostgreSQL, MinIO, local Ollama models, no cloud AI APIs) and a different version model. This document is kept for history only. See `CLAUDE.md` and `docs/decisions.md`.
+
 Date: 2026-11-10
 Status: Draft v2, awaiting owner approval. No implementation has started.
 Supersedes: draft v1 (four-department policy Q&A), which was written before the
