@@ -264,3 +264,45 @@ class ConversationDetail(BaseModel):
 
 class RenameIn(BaseModel):
     title: str = Field(min_length=1, max_length=120)
+
+
+class CountItem(BaseModel):
+    key: str
+    count: int
+
+
+class DayCount(BaseModel):
+    day: date
+    questions: int
+
+
+class DashboardDocuments(BaseModel):
+    documents: int
+    awaiting_approval: int          # documents whose newest version is a draft
+    by_status: list[CountItem]      # versions: approved_current, draft, superseded, archived
+    by_business_line: list[CountItem]  # documents with a current version
+    demo_fixtures: int              # clearly labelled fictional documents, so they are never mistaken for BIL content
+
+
+class DashboardIndexing(BaseModel):
+    indexed_passages: int
+    jobs: list[CountItem]           # queued, processing, indexed, failed
+    average_duration_ms: int | None
+
+
+class DashboardActivity(BaseModel):
+    days: int
+    questions: int
+    outcomes: list[CountItem]       # answered, conflict, no_evidence, model_unavailable, needs_clarification
+    with_version_warnings: int
+    searches: int
+    denied: int                     # access attempts that were refused
+    active_people: int              # a count only, never who
+    per_day: list[DayCount]
+
+
+class DashboardOut(BaseModel):
+    generated_at: datetime
+    documents: DashboardDocuments
+    indexing: DashboardIndexing
+    activity: DashboardActivity
