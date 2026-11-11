@@ -93,4 +93,21 @@ describe("LandingPage", () => {
     renderApp(<LandingPage />);
     expect(screen.getByRole("img", { name: /ask screen.*flood cover.*draft reply/i })).toHaveAttribute("src", "/landing/answer.png");
   });
+
+  describe("static public copy (no API behind it)", () => {
+    it("offers no demo or sign-in, only a way to keep reading, and says why", () => {
+      renderApp(<LandingPage staticSite />);
+      expect(screen.queryByRole("link", { name: /try the demo|open the app|sign in/i })).not.toBeInTheDocument();
+      for (const link of screen.getAllByRole("link", { name: "See how it works" })) expect(link).toHaveAttribute("href", "#how");
+      expect(screen.getByRole("heading", { name: /the demo runs on a laptop, not on this page/i })).toBeInTheDocument();
+      expect(document.body).toHaveTextContent(/needs a database and local language models/i);
+    });
+
+    it("keeps everything else: six agents, results and limits", () => {
+      renderApp(<LandingPage staticSite />);
+      expect(screen.getAllByRole("tab")).toHaveLength(6);
+      expect(screen.getByRole("region", { name: /what one run on one laptop showed/i })).toBeInTheDocument();
+      expect(screen.getByRole("region", { name: /what it is not, yet/i })).toBeInTheDocument();
+    });
+  });
 });

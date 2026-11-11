@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession } from "@/lib/session";
 import { buttonClasses } from "@/components/ui/button";
+import { STATIC_SITE } from "@/lib/static-site";
 import { Wordmark } from "@/components/ui/logo";
 import { AppearanceMenu } from "@/components/shell/appearance-menu";
 
@@ -14,8 +15,12 @@ const LINKS = [
 ];
 
 /** Sign-in state is only known in the browser (see the (app) layout), so this part decides which button to show. */
-export function PrimaryAction({ size = "md", className }: { size?: "md" | "lg"; className?: string }) {
+export function PrimaryAction({ size = "md", className, staticSite = STATIC_SITE }: { size?: "md" | "lg"; className?: string; staticSite?: boolean }) {
   const { state } = useSession();
+  if (staticSite) {
+    // The public copy of this page has no demo behind it, so the one action is to keep reading.
+    return <a href="#how" className={buttonClasses("primary", size, className)}>See how it works</a>;
+  }
   const signedIn = state.status === "authenticated";
   return (
     <Link href={signedIn ? "/ask" : "/login"} className={buttonClasses("primary", size, className)}>
@@ -24,7 +29,7 @@ export function PrimaryAction({ size = "md", className }: { size?: "md" | "lg"; 
   );
 }
 
-export function LandingHeader() {
+export function LandingHeader({ staticSite = STATIC_SITE }: { staticSite?: boolean }) {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
@@ -40,7 +45,7 @@ export function LandingHeader() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <AppearanceMenu />
-          <PrimaryAction />
+          <PrimaryAction staticSite={staticSite} />
         </div>
       </div>
     </header>

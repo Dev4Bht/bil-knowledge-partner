@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/ui/logo";
+import { BASE_PATH, STATIC_SITE } from "@/lib/static-site";
 import { AgentExplorer } from "./agent-explorer";
 import { RESULTS, STACK } from "./content";
 import { LandingHeader, PrimaryAction } from "./landing-header";
@@ -49,13 +50,13 @@ function TrustCard({ title, children, specimen }: { title: string; children: Rea
   );
 }
 
-export function LandingPage() {
+export function LandingPage({ staticSite = STATIC_SITE }: { staticSite?: boolean }) {
   return (
     <div className="bg-bg text-ink">
       <a href="#content" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
-      <LandingHeader />
+      <LandingHeader staticSite={staticSite} />
 
       <main id="content">
         {/* Hero */}
@@ -73,10 +74,12 @@ export function LandingPage() {
                 BIL Knowledge Partner is six cooperating AI agents that read only approved BIL documents. Each has one narrow job. When the documents do not say, it tells you so instead of guessing.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
-                <PrimaryAction size="lg" />
-                <a href="#how" className="inline-flex min-h-12 items-center gap-2 rounded-[8px] px-4 text-[16px] font-semibold text-link hover:underline">
-                  See how an answer is made <span aria-hidden="true">↓</span>
-                </a>
+                <PrimaryAction size="lg" staticSite={staticSite} />
+                {!staticSite && (
+                  <a href="#how" className="inline-flex min-h-12 items-center gap-2 rounded-[8px] px-4 text-[16px] font-semibold text-link hover:underline">
+                    See how an answer is made <span aria-hidden="true">↓</span>
+                  </a>
+                )}
               </div>
               <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-[15px] text-muted">
                 <li className="flex items-center gap-2"><span aria-hidden="true" className="h-1.5 w-1.5 rotate-45 bg-gold" />Runs on one laptop</li>
@@ -90,14 +93,14 @@ export function LandingPage() {
               {/* A real capture of the demo answering a question from public BIL documents. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/landing/answer.png"
+                src={`${BASE_PATH}/landing/answer.png`}
                 width={1272}
                 height={2084}
                 alt="The Ask screen. A question about flood cover on comprehensive motor insurance, an answer with a numbered source, and an English draft reply marked review before use."
                 className="w-full rounded-[14px] border border-line-strong bg-surface shadow-[var(--shadow-lg)]"
               />
               <figcaption className="mt-3 text-[14px] text-muted">
-                A real answer from the demo, using public BIL documents. Each source opens the stored document at that page.
+                A real answer from the demo, using public BIL documents. In the demo, each source opens the stored document at that page.
               </figcaption>
             </figure>
           </div>
@@ -197,9 +200,15 @@ export function LandingPage() {
 
         <section aria-labelledby="cta-title" className="border-t border-line">
           <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 md:py-24">
-            <h2 id="cta-title" className="mx-auto max-w-2xl font-display text-[34px] font-semibold leading-tight text-heading md:text-[44px]">See it answer a real question.</h2>
-            <p className="mx-auto mt-4 max-w-xl text-[18px] text-muted">Sign in with a demo account, ask about a claim, and open the source it cites.</p>
-            <div className="mt-8 flex justify-center"><PrimaryAction size="lg" /></div>
+            <h2 id="cta-title" className="mx-auto max-w-2xl font-display text-[34px] font-semibold leading-tight text-heading md:text-[44px]">
+              {staticSite ? "The demo runs on a laptop, not on this page." : "See it answer a real question."}
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-[18px] text-muted">
+              {staticSite
+                ? "It needs a database and local language models, so this page describes the prototype instead of hosting it."
+                : "Sign in with a demo account, ask about a claim, and open the source it cites."}
+            </p>
+            {!staticSite && <div className="mt-8 flex justify-center"><PrimaryAction size="lg" /></div>}
           </div>
         </section>
       </main>
@@ -208,7 +217,7 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-[14px] text-muted sm:px-6 md:flex-row md:items-center md:justify-between">
           <span className="text-heading"><Wordmark /></span>
           <p className="max-w-xl">Hackathon 2026 prototype. Not an official BIL service, and not BIL policy. Answers are drafts for staff to review.</p>
-          <Link href="/login" className="font-semibold text-link hover:underline">Sign in</Link>
+          {staticSite ? <a href="#content" className="font-semibold text-link hover:underline">Back to top</a> : <Link href="/login" className="font-semibold text-link hover:underline">Sign in</Link>}
         </div>
       </footer>
     </div>
