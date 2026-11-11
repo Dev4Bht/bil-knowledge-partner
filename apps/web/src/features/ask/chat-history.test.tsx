@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { STAFF } from "@/test/fixtures";
 import { mockApi, renderApp, route } from "@/test/utils";
 import type { ConversationSummary } from "@/lib/types";
@@ -32,6 +32,15 @@ describe("groupChats", () => {
 });
 
 describe("ChatHistory", () => {
+  // The fixtures are built around NOW; freeze only the clock (not timers) so day headings never depend on the real date.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("lists saved chats under day headings and marks the open one", async () => {
     setup(THREE, [], "c2");
     expect(await screen.findByRole("button", { name: /^Flood claims for comprehensive motor/ })).toBeInTheDocument();

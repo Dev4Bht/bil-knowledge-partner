@@ -27,7 +27,7 @@ Extension whitelist (PDF, DOCX, TXT), content signature check, UTF-8 and binary 
 Documents are untrusted. Evidence is HTML-escaped and fenced in `<evidence>` tags so a passage cannot close the fence; every prompt states that document instructions must be ignored; the model has no tools that act on anything. Even if a model were fooled, its claims still need real, permitted citations, and any figure must appear in the cited text, so an injected statement cannot become a verified answer unless a current document actually says it.
 
 ## Logging
-`audit_events` stores actor, event, resource, result and counts. Question and answer text is never logged (tested). Chat messages are stored for follow-ups; questions containing CID-style numbers are refused.
+`audit_events` stores actor, event, resource, result and counts. Question and answer text is never logged (tested). The manager/admin dashboard is built only from those records and from counts of documents and jobs; it exposes no text, titles, names or emails (tested). Chat messages are stored for follow-ups; questions containing CID-style numbers are refused.
 
 ## Known gaps
 * The login rate limiter is in memory (single process).

@@ -48,4 +48,6 @@ Base URL `http://localhost:8000`. Interactive docs at `/docs`. All requests use 
 Questions containing CID-style numbers are refused (422 `personal_data`). 30 questions per user per minute.
 
 ## System
-`GET /capabilities` (what is actually available: extraction, search, llm, translation, model name, notes), `GET /audit` (admin), `GET /health`, `GET /ready`.
+`GET /capabilities` (what is actually available: extraction, search, llm, translation, model name, notes), `GET /audit` (admin), `GET /dashboard?days=14` (manager or admin; days 1 to 90), `GET /health`, `GET /ready`.
+
+`GET /dashboard` returns counts only: documents (total, awaiting approval, versions by status, current documents by business line, labelled demo fixtures), indexing (searchable passages, jobs by state, average duration) and activity over the period (questions by outcome, those with version notices, searches, refused requests, number of distinct people, questions per day). It never returns question or answer text, document titles, names or emails. Staff get 403.

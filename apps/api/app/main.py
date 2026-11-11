@@ -8,7 +8,7 @@ from sqlalchemy import text
 from .config import get_settings
 from .db import get_engine
 from .errors import ApiError
-from .routers import auth, catalog, chat, documents, search, system
+from .routers import auth, catalog, chat, dashboard, documents, search, system
 from .worker import start_in_background
 from .storage import build_object_store
 
@@ -60,7 +60,7 @@ def create_app() -> FastAPI:
     async def api_error_handler(_request: Request, exc: ApiError):
         return JSONResponse({"detail": exc.message, "code": exc.code}, status_code=exc.status_code)
 
-    for router in (auth.router, catalog.router, documents.router, search.router, chat.router, system.router):
+    for router in (auth.router, catalog.router, documents.router, search.router, chat.router, system.router, dashboard.router):
         app.include_router(router)
 
     @app.get("/health")

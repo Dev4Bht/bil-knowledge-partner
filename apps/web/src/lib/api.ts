@@ -4,6 +4,7 @@ import type {
   AuditPage,
   BusinessLine,
   Capabilities,
+  Dashboard,
   CompareResult,
   ConversationDetail,
   ConversationSummary,
@@ -154,6 +155,9 @@ export async function fetchVersionText(documentId: string, versionId: string, si
   if (!response.ok) throw new ApiError(response.status, "file_error", "This file could not be loaded.");
   return response.text();
 }
+
+// ---- Dashboard
+export const getDashboard = (days: number, signal?: AbortSignal) => request<Dashboard>("/dashboard", { query: { days }, signal });
 
 // ---- Audit
 export const listAudit = (query: { event?: string; result?: string; page?: number; page_size?: number }, signal?: AbortSignal) =>

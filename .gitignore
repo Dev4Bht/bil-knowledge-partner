@@ -28,3 +28,5 @@ data/objects/
 
 # Downloaded public documents (never commit third-party documents)
 data/
+apps/web/.static-build/
+apps/web/dist-landing/

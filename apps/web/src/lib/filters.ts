@@ -25,4 +25,11 @@ export const askFilters = {
   chat: parseAsString,
 };
 
+export const DASHBOARD_DAYS = ["7", "14", "30", "90"] as const;
+
+/** URL state for /dashboard: the time window. */
+export const dashboardFilters = {
+  days: parseAsStringLiteral(DASHBOARD_DAYS).withDefault("14"),
+};
+
 export type StatusValue = (typeof STATUS_VALUES)[number];
