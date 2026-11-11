@@ -45,7 +45,7 @@ Demo accounts (fictional people) are created when `SEED_DEMO=true`: `admin@demo.
 cd apps/api && uv run python scripts/import_public_documents.py --password "$DEMO_PASSWORD"
 ```
 
-Demo steps: sign in as admin, open Documents and upload a file, wait for indexing, approve it; sign in as staff, ask a question on Ask, open a citation, copy the draft reply. Staff are the final authority: nothing is sent to customers. Fictional test documents (`SEED_FIXTURES=true`) are always labelled and are never BIL policy.
+The landing page at http://localhost:3470 explains the agents and links to the demo sign-in. Demo steps: sign in as admin, open Documents and upload a file, wait for indexing, approve it; sign in as staff, ask a question on Ask, open a citation, copy the draft reply. Staff are the final authority: nothing is sent to customers. Fictional test documents (`SEED_FIXTURES=true`) are always labelled and are never BIL policy.
 
 Evaluation (needs the running stack and Ollama): `cd apps/api && uv run python eval/run_eval.py --password "$DEMO_PASSWORD"`.
 
