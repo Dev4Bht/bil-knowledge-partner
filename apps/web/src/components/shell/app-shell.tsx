@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { cn, isAdmin } from "@/lib/format";
+import { cn, isAdmin, isManager } from "@/lib/format";
 import { useSession } from "@/lib/session";
-import { IconAsk, IconChevronRight, IconDocs, IconShield } from "@/components/ui/icons";
+import { IconAsk, IconChevronRight, IconDashboard, IconDocs, IconShield } from "@/components/ui/icons";
 import { LogoMark, Wordmark } from "@/components/ui/logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CommandPalette, CommandPaletteTrigger } from "./command-palette";
@@ -15,11 +15,12 @@ import { UserMenu } from "./user-menu";
 
 type NavItem = { href: string; label: string; icon: ReactNode; match: (path: string) => boolean };
 
-function navItems(admin: boolean): NavItem[] {
+function navItems(admin: boolean, manager: boolean): NavItem[] {
   const items: NavItem[] = [
     { href: "/ask", label: "Ask", icon: <IconAsk />, match: (p) => p.startsWith("/ask") },
     { href: "/documents", label: "Documents", icon: <IconDocs />, match: (p) => p.startsWith("/documents") },
   ];
+  if (manager) items.push({ href: "/dashboard", label: "Dashboard", icon: <IconDashboard />, match: (p) => p.startsWith("/dashboard") });
   if (admin) items.push({ href: "/admin/audit", label: "Audit", icon: <IconShield />, match: (p) => p.startsWith("/admin") });
   return items;
 }
@@ -57,7 +58,7 @@ function Breadcrumb() {
 export function AppShell({ children }: { children: ReactNode }) {
   const { user } = useSession();
   const pathname = usePathname();
-  const items = navItems(isAdmin(user));
+  const items = navItems(isAdmin(user), isManager(user));
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   useEffect(() => {

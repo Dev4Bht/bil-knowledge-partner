@@ -228,3 +228,11 @@ export const IconChat = (p: IconProps) => (
     <path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12Z" />
   </Svg>
 );
+export const IconDashboard = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 20V10" />
+    <path d="M10 20V4" />
+    <path d="M16 20v-7" />
+    <path d="M22 20H2" />
+  </Svg>
+);

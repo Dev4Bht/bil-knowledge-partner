@@ -170,3 +170,21 @@ export type ConversationMessage = {
   notices: string[];
 };
 export type ConversationDetail = { id: string; title: string; created_at: string; updated_at: string; messages: ConversationMessage[] };
+
+// ---- Dashboard (counts only: no question text, titles or names)
+export type CountItem = { key: string; count: number };
+export type Dashboard = {
+  generated_at: string;
+  documents: { documents: number; awaiting_approval: number; by_status: CountItem[]; by_business_line: CountItem[]; demo_fixtures: number };
+  indexing: { indexed_passages: number; jobs: CountItem[]; average_duration_ms: number | null };
+  activity: {
+    days: number;
+    questions: number;
+    outcomes: CountItem[];
+    with_version_warnings: number;
+    searches: number;
+    denied: number;
+    active_people: number;
+    per_day: { day: string; questions: number }[];
+  };
+};
