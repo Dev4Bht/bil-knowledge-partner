@@ -1,6 +1,6 @@
 :HL["/bil-knowledge-partner/_next/static/chunks/37gf66fe25tri.css","style"]
-:HL["/bil-knowledge-partner/_next/static/chunks/1tbqyqz2er19o.css","style"]
+:HL["/bil-knowledge-partner/_next/static/chunks/3pkwgsbh4nwgc.css","style"]
 :HC["/",""]
-:HL["/bil-knowledge-partner/landing/answer.png","image"]
+:HL["/bil-knowledge-partner/_next/static/chunks/2izdokvaj92kq.css","style"]
 1:[["children",{"s":"__PAGE__","h":160}]]
-0:{"b":"5zVRVQ5KWrzK93Fxy7b5_","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
+0:{"b":"qwhyGT3q8V3J_96nXzdKv","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
