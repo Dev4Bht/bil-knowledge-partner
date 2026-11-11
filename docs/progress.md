@@ -33,11 +33,12 @@ English draft plus a Dzongkha draft from NLLB-200 (Qwen3 8B produced looping syl
 ## Phase 6: polish and demo. Mostly done
 - Evaluation: 18 labelled questions (12 on real public BIL/RMA documents, 6 controls on labelled fictional fixtures). Last run: 16 of 18 fully pass; the two misses (R01, R10) are vaguer-than-possible answers, not ungrounded ones. Details, causes and the corrected Recall@8 (0.964, section level) are in `evaluation.md`.
 - Web interface: Documents, Ask, Audit; user-selectable theme colour with light and dark; saved chats (re-open, rename, delete one or all; each user sees only their own; answers are re-checked against current access and status every time a chat is opened).
+- Dashboard (managers and admins): document, indexing and question-outcome counts, questions per day, refused requests, assistant status. Counts only. Screenshots: `docs/screenshots/dashboard-*.png`; browser check: `apps/web/e2e/dashboard.mjs`.
 - Saved-chat endpoints: `GET/PATCH/DELETE /chat/conversations[/{id}]`, `DELETE /chat/conversations`. Audit records never contain question or answer text.
 - **Not verified:** the PDF preview renders blank in headless Chromium (Chromium's built-in PDF viewer is not available there); it has not been checked in a normal browser by automated test.
 
 ## Test status
-API: 138 tests passed (pytest, real PostgreSQL; the tests against the real Qwen3 and BGE-M3 models are skipped when Ollama is absent). Web: 162 passed (Vitest). Browser scripts under `apps/web/e2e/` run against the live stack (walkthrough, appearance, chat history, live ask).
+API: 146 tests passed (pytest, real PostgreSQL; the tests against the real Qwen3 and BGE-M3 models are skipped when Ollama is absent). Web: 171 passed (Vitest). Browser scripts under `apps/web/e2e/` run against the live stack (walkthrough, appearance, chat history, live ask).
 
 ## Known gaps
 - The knowledge layer shares the DMS database (see `dms-adapter.md`); swapping in BIL's DMS needs a separate index with its own access data.
