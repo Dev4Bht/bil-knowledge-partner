@@ -32,6 +32,14 @@ describe("AuthGate", () => {
     expect(screen.getAllByRole("link", { name: "Audit" }).length).toBeGreaterThan(0);
   });
 
+  it("links back to the landing page from the logo and from the footer note", () => {
+    mockApi(docs);
+    navState.pathname = "/ask";
+    renderApp(<AuthGate>page body</AuthGate>, { user: STAFF });
+    for (const link of screen.getAllByRole("link", { name: /about this prototype/i })) expect(link).toHaveAttribute("href", "/");
+    expect(screen.getAllByRole("link", { name: /about this prototype/i }).length).toBeGreaterThanOrEqual(2);
+  });
+
   it("opens the command palette with Ctrl+K, finds a document and navigates with Enter", async () => {
     mockApi(docs);
     navState.pathname = "/documents";

@@ -21,7 +21,9 @@ Base URL `http://localhost:8000`. Interactive docs at `/docs`. All requests use 
 | `POST /documents/{id}/versions` (multipart) | admin, manager | New draft version |
 | `POST /documents/{id}/versions/{vid}/approve` | admin, manager | Atomic; queues indexing |
 | `POST /documents/{id}/versions/{vid}/archive` | admin, manager | |
-| `GET /documents/{id}/versions/{vid}/file` | signed in, access checked | Inline bytes; PDFs open at `#page=N` |
+| `GET /documents/{id}/versions/{vid}/pages` | signed in, access checked | Opens the view-only viewer: `{page_count, view_only, can_download, kind}`. Audited once per opening |
+| `GET /documents/{id}/versions/{vid}/pages/{n}` | signed in, access checked, 90 pages per person per minute | One page as a watermarked JPEG (`no-store`), rendered for the requester. No text layer |
+| `GET /documents/{id}/versions/{vid}/file` | **403 `view_only` for everyone by default** | The original file. Only when `ALLOW_ORIGINAL_DOWNLOAD=true`, and then managers and admins only, never staff. Unseen documents answer 404 first |
 | `GET /documents/{id}/compare?from=&to=` | signed in | Line diff (text files) |
 | `POST /documents/{id}/reindex` | admin, manager | Queue indexing again; 202 |
 | `GET /ingestion-jobs/{id}` | admin, manager | State, attempts, error, warning |
@@ -36,7 +38,7 @@ Base URL `http://localhost:8000`. Interactive docs at `/docs`. All requests use 
 |-------|---------|
 | `status` | `answered`, `conflict`, `no_evidence`, `model_unavailable`, `needs_clarification`, `error` |
 | `answer`, `claims[{text, citation_ids}]` | The answer is the verified claims joined; every claim has citations |
-| `citations[{id, document_id, version_id, title, folder_path, version_label, version_status, section, page, snippet, url, is_demo_fixture}]` | `url` is an API-relative path to the real file |
+| `citations[{id, document_id, version_id, title, folder_path, version_label, version_status, section, page, snippet, url, is_demo_fixture}]` | `url` is an API-relative path to the cited page in the view-only viewer (`/documents/{id}/versions/{vid}/pages/{page or 1}`), which resolves for every role |
 | `version_warnings[{kind, message, version_ids}]` | `older_version_ignored`, `conflict`, `draft_excluded` (managers only), `history_included` |
 | `drafts{en, dzo}`, `draft_notes[]` | Customer reply drafts for staff review, with check results |
 | `caveats[]` | e.g. a rule is not a decision on a specific customer |

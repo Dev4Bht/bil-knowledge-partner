@@ -306,3 +306,11 @@ class DashboardOut(BaseModel):
     documents: DashboardDocuments
     indexing: DashboardIndexing
     activity: DashboardActivity
+
+
+class ViewerOut(BaseModel):
+    """What the view-only viewer needs to open a version."""
+    page_count: int
+    view_only: bool = True
+    can_download: bool  # true only for managers and admins, who may fetch the original
+    kind: Literal["pdf", "text"]

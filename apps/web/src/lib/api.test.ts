@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ApiError, API_URL, approveVersion, askQuestion, citationHref, listDocuments, login, onUnauthorized, request } from "./api";
+import { ApiError, approveVersion, askQuestion, fetchPageImage, getViewerInfo, listDocuments, login, onUnauthorized, request } from "./api";
 import { mockApi, route } from "@/test/utils";
 
 describe("api client", () => {
@@ -52,8 +52,20 @@ describe("api client", () => {
     expect((calls[0].init.headers as Record<string, string>)["Content-Type"]).toBe("application/json");
   });
 
-  it("prefixes API-relative citation URLs with the API base and keeps the page anchor", () => {
-    expect(citationHref("/documents/d/versions/v/file#page=3")).toBe(`${API_URL}/documents/d/versions/v/file#page=3`);
-    expect(citationHref("https://x.example/f.pdf")).toBe("https://x.example/f.pdf");
+  it("asks the viewer endpoint for the page count and fetches page images with cookies, never the file", async () => {
+    const { calls } = mockApi(
+      route("GET", "/documents/d/versions/v/pages", { body: { page_count: 4, view_only: true, can_download: false, kind: "pdf" } }),
+      route("GET", "/documents/d/versions/v/pages/2", { text: "img" }),
+    );
+    expect((await getViewerInfo("d", "v")).page_count).toBe(4);
+    expect(await fetchPageImage("d", "v", 2)).toMatch(/^blob:/);
+    expect(calls.map((c) => c.url.pathname)).toEqual(["/documents/d/versions/v/pages", "/documents/d/versions/v/pages/2"]);
+    expect(calls[1].init.credentials).toBe("include");
+  });
+
+  it("explains a rate-limited or missing page in plain words", async () => {
+    mockApi(route("GET", "/documents/d/versions/v/pages/1", { status: 429, body: { detail: "x", code: "too_many_pages" } }), route("GET", "/documents/d/versions/v/pages/9", { status: 404, body: {} }));
+    await expect(fetchPageImage("d", "v", 1)).rejects.toMatchObject({ status: 429, message: expect.stringMatching(/very quickly/i) });
+    await expect(fetchPageImage("d", "v", 9)).rejects.toMatchObject({ status: 404, message: expect.stringMatching(/could not be loaded/i) });
   });
 });

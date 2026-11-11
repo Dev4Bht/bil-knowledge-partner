@@ -67,7 +67,7 @@ def test_concurrent_approvals_never_leave_two_current_versions(client_for, folde
     assert list(_statuses(admin, doc["id"]).values()).count("approved_current") == 1
 
 
-def test_stored_files_are_immutable_and_hash_matches(client_for, folders):
+def test_stored_files_are_immutable_and_hash_matches(client_for, folders, allow_downloads):
     admin = client_for("admin")
     content = b"Exact original bytes.\n"
     doc = _doc(admin, folders, content=content)

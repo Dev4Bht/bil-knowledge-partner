@@ -278,13 +278,59 @@ def archive_version(db: Session, actor: User, document_id: uuid.UUID, version_id
 
 # ---------------------------------------------------------------- files and comparison
 
-def read_file(db: Session, store: ObjectStore, user: User, document_id: uuid.UUID, version_id: uuid.UUID):
-    document = get_document(db, user, document_id)
+def can_download_original(user: User, allow_original_download: bool) -> bool:
+    """Off for everyone unless the owners switch it on, and then for managers and admins only, never for staff."""
+    return allow_original_download and access.can_manage(user)
+
+
+def read_file(db: Session, store: ObjectStore, user: User, document_id: uuid.UUID, version_id: uuid.UUID,
+              allow_original_download: bool = False):
+    """The ORIGINAL file. Documents are view-only, so by default nobody gets it; people read rendered pages instead."""
+    document = get_document(db, user, document_id)  # unseen documents answer 404 first, so nothing is revealed
     version = get_version(document, user, version_id)
+    if not can_download_original(user, allow_original_download):
+        audit.record(db, actor_id=user.id, event="file.download", resource_type="version", resource_id=str(version.id),
+                     result="denied", detail={"reason": "view_only"})
+        db.commit()
+        raise ApiError(403, "view_only", "This document is view-only and cannot be downloaded. Read it in the viewer.")
     data = store.get(version.object_key)
     audit.record(db, actor_id=user.id, event="file.view", resource_type="version", resource_id=str(version.id))
     db.commit()
     return version, data
+
+
+def open_view(db: Session, store: ObjectStore, user: User, document_id: uuid.UUID, version_id: uuid.UUID):
+    """Open the view-only viewer: same visibility rules as every other read, and one audit event per opening."""
+    from . import protected_view
+
+    document = get_document(db, user, document_id)
+    version = get_version(document, user, version_id)
+    data = store.get(version.object_key)
+    try:
+        count = protected_view.page_count(str(version.id), version.mime_type, data)
+    except protected_view.ViewError as exc:
+        raise ApiError(422, "not_viewable", str(exc)) from exc
+    audit.record(db, actor_id=user.id, event="file.view", resource_type="version", resource_id=str(version.id),
+                 detail={"view_only": True, "pages": count})
+    db.commit()
+    return version, count
+
+
+def render_view_page(db: Session, store: ObjectStore, user: User, document_id: uuid.UUID, version_id: uuid.UUID, page: int) -> bytes:
+    """One watermarked page image for this viewer. Not audited per page (opening is); rate limited by the router."""
+    from . import protected_view
+
+    document = get_document(db, user, document_id)
+    version = get_version(document, user, version_id)
+    data = store.get(version.object_key)
+    try:
+        count = protected_view.page_count(str(version.id), version.mime_type, data)
+        if page < 1 or page > count:
+            raise not_found(f"This document has {count} page{'s' if count != 1 else ''}")
+        label = protected_view.watermark_label(user.display_name, user.email)
+        return protected_view.render_page(str(version.id), version.mime_type, data, page, label)
+    except protected_view.ViewError as exc:
+        raise ApiError(422, "not_viewable", str(exc)) from exc
 
 
 def compare_versions(

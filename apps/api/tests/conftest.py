@@ -91,6 +91,15 @@ def app(db):
 
 
 @pytest.fixture
+def allow_downloads(app):
+    """Switch ALLOW_ORIGINAL_DOWNLOAD on for a test about downloads. The default, tested elsewhere, is off."""
+    from app.config import get_settings
+
+    base = get_settings()
+    app.dependency_overrides[get_settings] = lambda: base.model_copy(update={"allow_original_download": True})
+
+
+@pytest.fixture
 def make_user(db):
     from sqlalchemy import select
 

@@ -2,7 +2,7 @@ import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { CAPS_OFF, CAPS_ON, MANAGER, STAFF } from "@/test/fixtures";
-import { mockApi, renderApp, route } from "@/test/utils";
+import { mockApi, renderApp, route, viewerRoutes } from "@/test/utils";
 import type { AskResponse, Citation } from "@/lib/types";
 import { AskPage } from "./ask-page";
 import { looksDegenerate } from "./draft-card";
@@ -18,7 +18,7 @@ const citation = (over: Partial<Citation> = {}): Citation => ({
   section: "§4.1 Flood damage",
   page: 3,
   snippet: "Flood damage is treated as a natural calamity.",
-  url: "/documents/doc-1/versions/ver-1/file#page=3",
+  url: "/documents/doc-1/versions/ver-1/pages/3",
   is_demo_fixture: true,
   ...over,
 });
@@ -88,14 +88,18 @@ describe("Ask answers", () => {
     expect(screen.getByRole("heading", { name: "Draft reply for the customer" })).toBeInTheDocument();
   });
 
-  it("opens the cited document at the right page in a preview drawer", async () => {
-    mockApi(chats, caps(), ask(response()));
+  it("opens the cited document at the right page in a view-only drawer, with no link to the file", async () => {
+    const { calls } = mockApi(chats, caps(), ask(response()), ...viewerRoutes({ page_count: 40 }));
     renderApp(<AskPage />, { user: STAFF });
     const user = await submit("Is flood covered?");
     await screen.findByRole("heading", { name: "Answer" });
     await user.click(screen.getAllByRole("button", { name: /Open source 1/ })[0]);
     const drawer = screen.getByRole("dialog", { name: "Motor Insurance Handbook" });
-    expect(within(drawer).getByTitle(/Preview of Motor Insurance Handbook, page 3/)).toHaveAttribute("src", "http://localhost:8000/documents/doc-1/versions/ver-1/file#page=3");
+    expect(await within(drawer).findByRole("img", { name: /Page 3 of 40 of Motor Insurance Handbook/ })).toBeInTheDocument();
+    expect(calls.some((c) => c.url.pathname === "/documents/doc-1/versions/ver-1/pages/3")).toBe(true);
+    expect(within(drawer).queryByRole("link", { name: /open file|download|new tab/i })).not.toBeInTheDocument();
+    expect(drawer.querySelector("iframe")).toBeNull();
+    expect(within(drawer).getByRole("link", { name: /Open document page/ })).toHaveAttribute("href", "/documents/doc-1?version=ver-1&page=3");
     expect(within(drawer).getByText("DEMO")).toBeInTheDocument();
     expect(within(drawer).getByText(/natural calamity/)).toBeInTheDocument();
     await user.keyboard("{Escape}");

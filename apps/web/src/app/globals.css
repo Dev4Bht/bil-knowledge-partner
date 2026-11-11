@@ -307,3 +307,16 @@ h3 {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* View-only documents: never printed. The viewer hides itself and a short note takes its place. */
+.protected-print-note {
+  display: none;
+}
+@media print {
+  .protected-view {
+    display: none !important;
+  }
+  .protected-print-note {
+    display: block !important;
+  }
+}

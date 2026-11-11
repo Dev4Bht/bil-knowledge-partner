@@ -188,3 +188,6 @@ export type Dashboard = {
     per_day: { day: string; questions: number }[];
   };
 };
+
+// ---- View-only viewer
+export type ViewerInfo = { page_count: number; view_only: boolean; can_download: boolean; kind: "pdf" | "text" };

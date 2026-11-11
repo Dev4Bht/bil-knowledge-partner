@@ -7,10 +7,12 @@ from sqlalchemy.orm import Session
 
 from ..config import Settings, get_settings
 from ..db import get_db
-from ..deps import csrf_guard, current_user, get_store, require_manager
+from ..deps import csrf_guard, current_user, get_store, page_limiter, require_manager
 from ..models import AccessClassification, BusinessLineCode, User, VersionStatus
 from ..presenters import document_detail, document_summary, version_out
-from ..schemas import CompareOut, DocumentDetail, DocumentPage, VersionOut
+from ..errors import ApiError
+from ..ratelimit import RateLimiter
+from ..schemas import CompareOut, DocumentDetail, DocumentPage, VersionOut, ViewerOut
 from ..services import audit, ingestion
 from ..services import documents as svc
 from ..storage import ObjectStore
@@ -91,13 +93,40 @@ def archive(document_id: uuid.UUID, version_id: uuid.UUID, user: User = Depends(
 @router.get("/{document_id}/versions/{version_id}/file")
 def file(document_id: uuid.UUID, version_id: uuid.UUID, user: User = Depends(current_user),
          db: Session = Depends(get_db), store: ObjectStore = Depends(get_store), settings: Settings = Depends(get_settings)):
-    version, data = svc.read_file(db, store, user, document_id, version_id)
+    """The original file. Refused (403 view_only) for everyone unless ALLOW_ORIGINAL_DOWNLOAD is on, and then managers/admins only."""
+    version, data = svc.read_file(db, store, user, document_id, version_id, settings.allow_original_download)
     media = "text/plain; charset=utf-8" if version.mime_type == "text/plain" else version.mime_type
     return Response(content=data, media_type=media, headers={
         "Content-Disposition": f"inline; filename*=UTF-8''{quote(version.original_filename)}",
         "X-Content-Type-Options": "nosniff",
         "Content-Security-Policy": f"frame-ancestors 'self' {settings.web_origin}",
         "Cache-Control": "private, no-store",
+    })
+
+
+@router.get("/{document_id}/versions/{version_id}/pages", response_model=ViewerOut)
+def viewer(document_id: uuid.UUID, version_id: uuid.UUID, user: User = Depends(current_user),
+           db: Session = Depends(get_db), store: ObjectStore = Depends(get_store), settings: Settings = Depends(get_settings)):
+    """Open the view-only viewer for a version: how many pages, and whether this person may also download the original."""
+    version, count = svc.open_view(db, store, user, document_id, version_id)
+    return ViewerOut(page_count=count, can_download=svc.can_download_original(user, settings.allow_original_download),
+                     kind="pdf" if version.mime_type == "application/pdf" else "text")
+
+
+@router.get("/{document_id}/versions/{version_id}/pages/{page}")
+def page_image(document_id: uuid.UUID, version_id: uuid.UUID, page: int, user: User = Depends(current_user),
+               db: Session = Depends(get_db), store: ObjectStore = Depends(get_store),
+               limiter: RateLimiter = Depends(page_limiter)):
+    """One page as a watermarked image. It has no text layer, and the watermark names the person who requested it."""
+    if not limiter.allow(str(user.id)):
+        raise ApiError(429, "too_many_pages", "You are opening pages very quickly. Wait a moment and try again.")
+    image = svc.render_view_page(db, store, user, document_id, version_id, page)
+    return Response(content=image, media_type="image/jpeg", headers={
+        "Content-Disposition": "inline; filename=\"page.jpg\"",
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control": "private, no-store, max-age=0",
+        "Pragma": "no-cache",
+        "Content-Security-Policy": "default-src 'none'; img-src 'self'",
     })
 
 

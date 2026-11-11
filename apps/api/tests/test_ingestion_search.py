@@ -127,7 +127,7 @@ def test_search_endpoint_returns_citable_hits_and_does_not_log_the_question(app,
     body = client.post("/search", json={"query": "secret-question-text flood damage covered"}).json()
     top = body["items"][0]
     assert top["title"] == "Motor Insurance Handbook" and top["section"] == "§4.1 Flood damage"
-    assert top["url"] == f"/documents/{top['document_id']}/versions/{top['version_id']}/file"
+    assert top["url"] == f"/documents/{top['document_id']}/versions/{top['version_id']}/pages/{top['page'] or 1}"
     assert top["version_status"] == "approved_current" and top["is_demo_fixture"] is True
     assert body["facets"]["business_line"]["general_insurance"] >= 1
     admin = TestClient(app, headers={"X-Requested-With": "bil-web"})

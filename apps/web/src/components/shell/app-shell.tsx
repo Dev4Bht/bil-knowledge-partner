@@ -83,10 +83,12 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Side rail: icons with labels from 768 px, wider from 1024 px. */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[84px] flex-col bg-rail text-rail-ink md:flex lg:w-60">
         <div className="flex h-16 items-center justify-center border-b border-white/10 lg:justify-start lg:px-5">
-          <span className="lg:hidden">
-            <LogoMark size={34} />
-          </span>
-          <Wordmark className="hidden text-white lg:flex" />
+          <Link href="/" aria-label="About this prototype (home page)" className="flex items-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-gold">
+            <span className="lg:hidden">
+              <LogoMark size={34} />
+            </span>
+            <Wordmark className="hidden text-white lg:flex" />
+          </Link>
         </div>
         <nav aria-label="Main" className="flex flex-1 flex-col gap-1 p-3">
           {items.map((item) => {
@@ -109,7 +111,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </nav>
         <p className="border-t border-white/10 px-4 py-3 text-center text-[11px] leading-snug text-rail-muted lg:text-left">
-          <span className="hidden lg:inline">Prototype. Public BIL and RMA documents; not BIL&rsquo;s internal versions.</span>
+          <span className="hidden lg:inline">Prototype. Public BIL and RMA documents; not BIL&rsquo;s internal versions. <Link href="/" className="font-semibold text-rail-ink underline-offset-2 hover:underline">About this prototype</Link></span>
           <span className="lg:hidden">Beta</span>
         </p>
       </aside>

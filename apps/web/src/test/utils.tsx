@@ -25,6 +25,7 @@ export function mockApi(...handlers: Handler[]) {
         status,
         json: async () => r.body,
         text: async () => r.text ?? JSON.stringify(r.body ?? ""),
+        blob: async () => new Blob([r.text ?? "image"]),
       } as Response;
     }
     throw new Error(`Unmocked fetch: ${init.method ?? "GET"} ${url.pathname}${url.search}`);
@@ -32,6 +33,18 @@ export function mockApi(...handlers: Handler[]) {
   vi.stubGlobal("fetch", fetchMock);
   return { calls, fetchMock };
 }
+
+/** The view-only viewer's two calls: how many pages, and one page image. Works for any document and version. */
+export const viewerRoutes = (info: { page_count?: number; can_download?: boolean; kind?: "pdf" | "text" } = {}): Handler[] => [
+  (url, init) => {
+    if ((init.method ?? "GET") !== "GET" || !/^\/documents\/[^/]+\/versions\/[^/]+\/pages$/.test(url.pathname)) return undefined;
+    return { body: { page_count: info.page_count ?? 3, view_only: true, can_download: info.can_download ?? false, kind: info.kind ?? "pdf" } };
+  },
+  (url, init) => {
+    if ((init.method ?? "GET") !== "GET" || !/^\/documents\/[^/]+\/versions\/[^/]+\/pages\/\d+$/.test(url.pathname)) return undefined;
+    return { text: "page-image" };
+  },
+];
 
 export const route =
   (method: string, path: string | RegExp, response: MockResponse | ((url: URL, init: RequestInit) => MockResponse)): Handler =>

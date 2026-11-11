@@ -11,6 +11,11 @@ So the public copy is the landing page only. It describes the prototype and says
 
 The app itself is run with Docker Compose, see the README.
 
+## Linking the landing page and the app
+
+- **In the full app** the landing page (`/`) links to the app ("Try the demo" goes to sign-in, "Open the app" to Ask when signed in), and the app links back: the logo in the side rail and on the sign-in screen, and an "About this prototype" link in the rail.
+- **In the public static copy** there is no app to link to, so it says the demo runs locally. If the app is reachable somewhere you control, build with `NEXT_PUBLIC_APP_URL=https://your-app-host pnpm build:static` and "Try the demo" and "Sign in" point to `https://your-app-host/login`. Do not point it at an app you have not secured: the demo accounts use a published password (see "If you share the running demo instead").
+
 ## Build the static landing page
 
 ```bash
@@ -40,6 +45,24 @@ Any of these serves `dist-landing/` as-is. Each needs an account of yours and a 
 | Netlify | `npx netlify-cli login`, then `npx netlify-cli deploy --dir dist-landing --prod` |
 | Vercel | `npx vercel login`, then `npx vercel deploy dist-landing --prod` |
 | GitHub Pages | Needs a public repository (or a paid plan for a private one). Build with `STATIC_BASE_PATH=/<repo-name>`, then publish `dist-landing/` from a workflow or a `gh-pages` branch. This repository is private, so it is not an option today. |
+
+## Live copy
+
+The landing page is published at **https://dev4bht.github.io/bil-knowledge-partner/** (GitHub Pages, from the `gh-pages` branch of the public repository https://github.com/Dev4Bht/bil-knowledge-partner).
+
+This private repository cannot use GitHub Pages on a free plan, and publishing it would expose its history, so the public repository is a **separate copy**: the same files, with author emails rewritten to the GitHub no-reply address. It does not update itself. To refresh the live page:
+
+```bash
+cd apps/web
+STATIC_BASE_PATH=/bil-knowledge-partner pnpm build:static
+# in a clone of the public repository: replace the contents of the gh-pages branch with dist-landing/,
+# add an empty .nojekyll file (GitHub would otherwise drop the _next folder), commit and push.
+node e2e/static-landing.mjs https://dev4bht.github.io/bil-knowledge-partner/   # check the live page
+```
+
+To take it down: `gh repo delete Dev4Bht/bil-knowledge-partner`.
+
+The public repository has no licence, so by default all rights are reserved.
 
 ## Keep it honest
 

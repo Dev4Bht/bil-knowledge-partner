@@ -1,5 +1,5 @@
-// The landing page in a real browser: content, links, keyboard use of the agent explorer, themes and phone width.
-// Usage: node e2e/landing.mjs  (web on :3470)
+// The landing page in a real browser against the live stack: content, the recorded run, links both ways, themes, phone.
+// Usage: node e2e/landing.mjs  (web on :3470, API on :8000)
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
@@ -20,38 +20,53 @@ page.on("pageerror", (e) => errors.push(e.message));
 page.on("console", (m) => m.type() === "error" && !/status of 401/.test(m.text()) && errors.push(m.text()));
 await page.goto(`${BASE}/`);
 await page.getByRole("heading", { level: 1 }).waitFor();
-check(/draft reply/i.test(await page.getByRole("heading", { level: 1 }).innerText()), "the landing page is served at / without a redirect");
+check(/Every answer comes with the page it came from/.test(await page.getByRole("heading", { level: 1 }).innerText()), "the landing page is served at / without a redirect");
 check(new URL(page.url()).pathname === "/", "a visitor stays on / (no bounce to /login)");
-const img = page.getByRole("img", { name: /ask screen/i });
-check(await img.evaluate((el) => el.complete && el.naturalWidth > 0), "the hero image loads");
-
 const cta = page.getByRole("link", { name: "Try the demo" }).first();
 check((await cta.getAttribute("href")) === "/login", "'Try the demo' goes to sign in");
 await page.screenshot({ path: `${OUT}/landing-1280.png`, fullPage: true });
 
-// Agent explorer by keyboard.
+// The recorded run.
 const tabs = page.getByRole("tab");
-check((await tabs.count()) === 6, "six agents are listed");
-await tabs.first().focus();
-await page.keyboard.press("ArrowDown");
-check((await tabs.nth(1).getAttribute("aria-selected")) === "true", "ArrowDown selects the next agent");
-check(/never retrieved/.test(await page.getByRole("tabpanel").innerText()), "the panel shows Retrieval's details");
-await page.getByRole("link", { name: "How it works" }).first().click();
-await page.waitForFunction(() => location.hash === "#how");
+check((await tabs.count()) === 3, "three recorded runs are offered");
+await tabs.nth(1).click();
+await page.getByText("0 claims · 0 sources · 0 drafts").waitFor();
+check(/searched 2 times/.test(await page.getByRole("tabpanel").innerText()), "the declined run shows it searched twice before stopping");
+await tabs.nth(2).click();
+await page.getByText("Fictional test documents, not BIL policy").waitFor();
+check(/10 working days/.test(await page.getByRole("tabpanel").innerText()) && /20 working days/.test(await page.getByRole("tabpanel").innerText()), "the conflict run quotes both documents");
+await tabs.nth(0).focus();
+await page.keyboard.press("ArrowRight");
+check((await tabs.nth(1).getAttribute("aria-selected")) === "true", "arrow keys move between the runs");
+
+// Structure and in-page links.
+check((await page.getByRole("table", { name: /six roles/i }).getByRole("row").count()) === 7, "the roles table has a header and six rows");
+await page.getByRole("link", { name: "Six roles" }).first().click();
+await page.waitForFunction(() => location.hash === "#roles");
 check(true, "the in-page link jumps to the section");
 
-// Signed in: the same page offers the app.
+// Landing -> app and app -> landing.
 await page.goto(`${BASE}/login`);
+await page.getByRole("link", { name: /about this prototype/i }).click();
+await page.waitForURL(`${BASE}/`);
+check(true, "the sign-in screen links back to the landing page");
+await page.getByRole("link", { name: "Try the demo" }).first().click();
+await page.waitForURL("**/login");
 await page.getByLabel("Email").fill("staff@demo.bil.test");
 await page.getByLabel("Password").fill("Demo-Pass-2026");
 await page.getByRole("button", { name: "Sign in" }).click();
 await page.waitForURL("**/ask", { waitUntil: "commit" });
-await page.goto(`${BASE}/`);
+await page.getByRole("link", { name: /about this prototype/i }).first().click();
+await page.waitForURL(`${BASE}/`);
+check(true, "inside the app, the logo leads to the landing page");
 await page.getByRole("link", { name: "Open the app" }).first().waitFor();
-check(new URL(page.url()).pathname === "/", "a signed-in user can still read the landing page");
-check((await page.getByRole("link", { name: "Open the app" }).first().getAttribute("href")) === "/ask", "'Open the app' goes to Ask");
+check((await page.getByRole("link", { name: "Open the app" }).first().getAttribute("href")) === "/ask", "signed in, the landing page offers 'Open the app'");
+await page.getByRole("link", { name: "Open the app" }).first().click();
+await page.waitForURL("**/ask", { waitUntil: "commit" });
+check(true, "'Open the app' goes to Ask");
+await page.goto(`${BASE}/`);
 
-// Dark and a custom colour via the real Appearance menu.
+// Dark and a custom colour through the real Appearance menu.
 await page.getByRole("button", { name: "Appearance" }).click();
 await page.getByRole("radio", { name: "Dark" }).click();
 await page.keyboard.press("Escape");

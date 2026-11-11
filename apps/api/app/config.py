@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     translation_model: str = "facebook/nllb-200-distilled-600M"  # CC-BY-NC 4.0: non-commercial use only
     embedding_model: str = "bge-m3"
     vector_max_distance: float = 0.65  # cosine distance above which a passage is treated as unrelated
+    # Documents are view-only: nobody can fetch the original file. Set true only if the document owners explicitly
+    # want managers and admins to be able to (staff can never).
+    allow_original_download: bool = False
     run_worker: bool = True            # index approved documents in a background thread inside the API
 
     # Demo accounts and fictional fixtures: only ever created outside production.

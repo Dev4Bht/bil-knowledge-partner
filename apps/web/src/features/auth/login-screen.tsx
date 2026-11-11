@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiError } from "@/lib/api";
@@ -66,7 +67,7 @@ export function LoginScreen() {
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
       <section className="relative isolate overflow-hidden bg-[#1b2a4e] px-6 py-8 text-[#f5f0ea] sm:px-10 lg:flex lg:flex-col lg:justify-between lg:px-14 lg:py-12" aria-label="About BIL Knowledge Partner">
         <div aria-hidden="true" className="pattern-band absolute inset-0 -z-10 opacity-[0.12]" />
-        <Wordmark className="text-[#f5f0ea]" />
+        <Link href="/" aria-label="About this prototype (home page)" className="inline-flex rounded-md outline-none focus-visible:ring-2 focus-visible:ring-gold"><Wordmark className="text-[#f5f0ea]" /></Link>
         <div className="py-8 lg:py-0">
           <h1 className="max-w-xl font-display text-[30px] font-semibold leading-[1.15] tracking-tight !text-[#f5f0ea] lg:text-[40px]">
             Ask about a policy, a claim or a loan.

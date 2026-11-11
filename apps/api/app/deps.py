@@ -92,6 +92,17 @@ def chat_limiter() -> RateLimiter:
     return _chat_limiter
 
 
+_page_limiter: RateLimiter | None = None
+
+
+def page_limiter() -> RateLimiter:
+    """Page images per user per minute. Reading a long document page by page is fine; scraping a library is not."""
+    global _page_limiter
+    if _page_limiter is None:
+        _page_limiter = RateLimiter(90)
+    return _page_limiter
+
+
 def get_translator(settings: Settings = Depends(get_settings)):
     from .agents.translate import get_nllb
 

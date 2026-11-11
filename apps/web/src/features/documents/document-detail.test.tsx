@@ -2,17 +2,16 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { ADMIN, detail, MANAGER, STAFF, version } from "@/test/fixtures";
-import { mockApi, renderApp, route } from "@/test/utils";
+import { mockApi, renderApp, route, viewerRoutes } from "@/test/utils";
 import { DiffView } from "./diff-view";
 import { DocumentDetailPage } from "./document-detail";
 import { describeApproval } from "./version-timeline";
 import { flattenTree } from "./folder-tree";
 
-const text = (body: string) => route("GET", /\/file$/, { text: body });
 
 describe("DocumentDetailPage", () => {
   it("shows a skeleton, then header, DEMO badge, role-aware timeline and the preview", async () => {
-    mockApi(route("GET", "/documents/doc-1", { body: detail() }), text("FICTIONAL DEMO FIXTURE body"));
+    mockApi(route("GET", "/documents/doc-1", { body: detail() }), ...viewerRoutes());
     renderApp(<DocumentDetailPage documentId="doc-1" />, { user: ADMIN });
     expect(screen.getByRole("status")).toHaveTextContent(/loading document/i);
     expect(await screen.findByRole("heading", { level: 1, name: "Motor Insurance Handbook" })).toBeInTheDocument();
@@ -20,7 +19,11 @@ describe("DocumentDetailPage", () => {
     const timeline = screen.getByRole("list", { name: /Version history/ });
     expect(within(timeline).getAllByRole("article")).toHaveLength(2);
     expect(within(timeline).getByRole("button", { name: /Approve as current/ })).toBeInTheDocument();
-    expect(await screen.findByText("FICTIONAL DEMO FIXTURE body")).toBeInTheDocument();
+    expect(await screen.findByRole("img", { name: /Page 1 of 3/ })).toBeInTheDocument();
+    expect(screen.getByText(/View-only\./)).toBeInTheDocument();
+    // Documents are view-only: nothing offers the file itself.
+    expect(screen.queryByRole("link", { name: /open in a new tab|download/i })).not.toBeInTheDocument();
+    expect(document.querySelector("iframe, embed, object")).toBeNull();
   });
 
   it("answers 404 and 403 with the same words so existence never leaks", async () => {
@@ -42,7 +45,7 @@ describe("DocumentDetailPage", () => {
   });
 
   it("hides approve, archive and upload from staff", async () => {
-    mockApi(route("GET", "/documents/doc-1", { body: detail({ versions: detail().versions.filter((v) => v.status !== "draft") }) }), text("x"));
+    mockApi(route("GET", "/documents/doc-1", { body: detail({ versions: detail().versions.filter((v) => v.status !== "draft") }) }), ...viewerRoutes());
     renderApp(<DocumentDetailPage documentId="doc-1" />, { user: STAFF });
     await screen.findByRole("heading", { level: 1 });
     expect(screen.queryByRole("button", { name: /Approve as current/ })).not.toBeInTheDocument();
@@ -63,7 +66,7 @@ describe("DocumentDetailPage", () => {
         approved = true;
         return { body: version({ id: "v2-id", status: "approved_current" }) };
       }),
-      text("body"),
+      ...viewerRoutes(),
     );
     renderApp(<DocumentDetailPage documentId="doc-1" />, { user: MANAGER });
     await screen.findByRole("heading", { level: 1 });
@@ -82,7 +85,7 @@ describe("DocumentDetailPage", () => {
 
   it("rolls the optimistic change back and reports the server's reason when approval fails", async () => {
     const user = userEvent.setup();
-    mockApi(route("GET", "/documents/doc-1", { body: detail() }), route("POST", /approve$/, { status: 409, body: { detail: "Only a draft version can be approved", code: "not_draft" } }), text("body"));
+    mockApi(route("GET", "/documents/doc-1", { body: detail() }), route("POST", /approve$/, { status: 409, body: { detail: "Only a draft version can be approved", code: "not_draft" } }), ...viewerRoutes());
     renderApp(<DocumentDetailPage documentId="doc-1" />, { user: ADMIN });
     await screen.findByRole("heading", { level: 1 });
     await user.click(screen.getByRole("button", { name: /Approve as current/ }));
@@ -93,7 +96,7 @@ describe("DocumentDetailPage", () => {
 
   it("warns that archiving the current version leaves none current", async () => {
     const user = userEvent.setup();
-    mockApi(route("GET", "/documents/doc-1", { body: detail() }), text("body"));
+    mockApi(route("GET", "/documents/doc-1", { body: detail() }), ...viewerRoutes());
     renderApp(<DocumentDetailPage documentId="doc-1" />, { user: ADMIN });
     await screen.findByRole("heading", { level: 1 });
     const current = screen.getByLabelText("Version 2022, approved current");
@@ -109,7 +112,7 @@ describe("DocumentDetailPage", () => {
       route("GET", "/documents/doc-1/compare", () => ({
         body: { from_version: d.versions[0], to_version: d.versions[1], lines: [{ kind: "hunk", text: "@@ -1 +1 @@" }, { kind: "del", text: "reported within 7 days" }, { kind: "add", text: "reported within 14 days" }, { kind: "ctx", text: "same line" }], },
       })),
-      text("body"),
+      ...viewerRoutes(),
     );
     renderApp(<DocumentDetailPage documentId="doc-1" />, { user: ADMIN });
     await screen.findByRole("heading", { level: 1 });
@@ -122,7 +125,7 @@ describe("DocumentDetailPage", () => {
 
   it("explains that PDF and DOCX comparison is not available yet instead of failing", async () => {
     const user = userEvent.setup();
-    mockApi(route("GET", "/documents/doc-1", { body: detail() }), route("GET", "/documents/doc-1/compare", { status: 422, body: { detail: "Comparison works for text files for now", code: "not_text" } }), text("body"));
+    mockApi(route("GET", "/documents/doc-1", { body: detail() }), route("GET", "/documents/doc-1/compare", { status: 422, body: { detail: "Comparison works for text files for now", code: "not_text" } }), ...viewerRoutes());
     renderApp(<DocumentDetailPage documentId="doc-1" />, { user: ADMIN });
     await screen.findByRole("heading", { level: 1 });
     await user.click(screen.getByRole("tab", { name: "Compare" }));
@@ -131,7 +134,7 @@ describe("DocumentDetailPage", () => {
 
   it("shows details and the honest indexing state", async () => {
     const user = userEvent.setup();
-    mockApi(route("GET", "/documents/doc-1", { body: detail() }), route("GET", "/capabilities", { body: { dms: true, extraction: false, search: false, llm: false, translation: false, llm_model: null, notes: [] } }), text("body"));
+    mockApi(route("GET", "/documents/doc-1", { body: detail() }), route("GET", "/capabilities", { body: { dms: true, extraction: false, search: false, llm: false, translation: false, llm_model: null, notes: [] } }), ...viewerRoutes());
     renderApp(<DocumentDetailPage documentId="doc-1" />, { user: ADMIN });
     await screen.findByRole("heading", { level: 1 });
     await user.click(screen.getByRole("tab", { name: "Details" }));
@@ -140,12 +143,15 @@ describe("DocumentDetailPage", () => {
     expect(await screen.findByText("Not indexed yet", { selector: "p" })).toBeInTheDocument();
   });
 
-  it("embeds PDFs with the requested page anchor", async () => {
+  it("opens a PDF in the view-only viewer on the requested page, never in an embedded file", async () => {
     const pdf = version({ id: "v9", mime_type: "application/pdf", original_filename: "circular.pdf" });
-    mockApi(route("GET", "/documents/doc-1", { body: detail({ versions: [pdf], current_version: pdf, latest_version: pdf }) }));
+    const { calls } = mockApi(route("GET", "/documents/doc-1", { body: detail({ versions: [pdf], current_version: pdf, latest_version: pdf }) }), ...viewerRoutes({ page_count: 5 }));
     renderApp(<DocumentDetailPage documentId="doc-1" />, { user: STAFF, search: "?page=3" });
-    const frame = await screen.findByTitle("Preview of circular.pdf");
-    expect(frame).toHaveAttribute("src", expect.stringMatching(/\/documents\/doc-1\/versions\/v9\/file#page=3$/));
+    expect(await screen.findByRole("img", { name: /Page 3 of 5/ })).toBeInTheDocument();
+    expect(screen.getByLabelText("Page number")).toHaveValue(3);
+    expect(calls.some((c) => c.url.pathname === "/documents/doc-1/versions/v9/pages/3")).toBe(true);
+    expect(calls.some((c) => c.url.pathname.endsWith("/file"))).toBe(false);
+    expect(document.querySelector("iframe")).toBeNull();
   });
 });
 

@@ -14,8 +14,7 @@ PAGE_SIZE = 10
 
 
 def hit_url(hit: Hit) -> str:
-    base = f"/documents/{hit.document_id}/versions/{hit.version_id}/file"
-    return f"{base}#page={hit.page}" if hit.page else base
+    return f"/documents/{hit.document_id}/versions/{hit.version_id}/pages/{hit.page or 1}"
 
 
 def hit_out(hit: Hit) -> SearchHitOut:

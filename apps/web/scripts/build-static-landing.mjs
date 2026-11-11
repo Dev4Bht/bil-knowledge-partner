@@ -6,6 +6,7 @@
 //
 // Usage:  pnpm build:static            (served from the site root)
 //         STATIC_BASE_PATH=/bil pnpm build:static   (served from a sub-path, e.g. a GitHub project page)
+//         NEXT_PUBLIC_APP_URL=https://app.example pnpm build:static   (point "Try the demo" at a hosted copy of the app)
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -16,6 +17,9 @@ const work = join(root, ".static-build");
 const out = join(root, "dist-landing");
 const basePath = (process.env.STATIC_BASE_PATH ?? "").replace(/\/+$/, "");
 if (basePath && !/^\/[A-Za-z0-9._~/-]+$/.test(basePath)) throw new Error(`STATIC_BASE_PATH must look like /name, got "${basePath}"`);
+
+const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/+$/, "");
+if (appUrl && !/^https?:\/\/[A-Za-z0-9.-]+(:\d+)?(\/[A-Za-z0-9._~/-]*)?$/.test(appUrl)) throw new Error(`NEXT_PUBLIC_APP_URL must look like https://host, got "${appUrl}"`);
 
 rmSync(work, { recursive: true, force: true });
 rmSync(out, { recursive: true, force: true });
@@ -40,7 +44,7 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 `);
 
-const env = { ...process.env, NEXT_PUBLIC_STATIC_SITE: "1", NEXT_PUBLIC_BASE_PATH: basePath, NEXT_TELEMETRY_DISABLED: "1" };
+const env = { ...process.env, NEXT_PUBLIC_STATIC_SITE: "1", NEXT_PUBLIC_BASE_PATH: basePath, NEXT_PUBLIC_APP_URL: appUrl, NEXT_TELEMETRY_DISABLED: "1" };
 const build = spawnSync("pnpm", ["exec", "next", "build"], { cwd: work, env, stdio: "inherit" });
 if (build.status !== 0) {
   console.error("Static build failed.");

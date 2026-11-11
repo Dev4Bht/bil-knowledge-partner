@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { citationHref } from "@/lib/api";
 import type { Citation } from "@/lib/types";
 import { DemoBadge, StatusBadge } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
+import { ProtectedViewer } from "@/features/documents/protected-viewer";
 import { Callout } from "@/components/ui/callout";
-import { IconDocs, IconExternal } from "@/components/ui/icons";
+import { IconDocs } from "@/components/ui/icons";
 import { Drawer } from "@/components/ui/overlay";
 
 export const citationLabel = (c: Pick<Citation, "title" | "version_label" | "page" | "section">) =>
@@ -31,7 +31,6 @@ export function CitationChip({ citation, index, onOpen }: { citation: Citation; 
 
 export function CitationDrawer({ citation, onClose }: { citation: Citation | null; onClose: () => void }) {
   if (!citation) return null;
-  const href = citationHref(citation.url);
   const notCurrent = citation.version_status !== "approved_current";
   return (
     <Drawer
@@ -62,14 +61,11 @@ export function CitationDrawer({ citation, onClose }: { citation: Citation | nul
           <blockquote className="mt-1.5 rounded-[10px] border-l-4 border-gold bg-gold-soft px-4 py-3 text-[15px] leading-relaxed text-ink">{citation.snippet}</blockquote>
         </div>
         <div className="flex flex-wrap gap-2">
-          <a href={href} target="_blank" rel="noreferrer" className={buttonClasses("secondary", "sm")}>
-            <IconExternal size={16} /> Open file in a new tab
-          </a>
-          <Link href={`/documents/${citation.document_id}?version=${citation.version_id}`} className={buttonClasses("quiet", "sm")}>
+          <Link href={`/documents/${citation.document_id}?version=${citation.version_id}${citation.page ? `&page=${citation.page}` : ""}`} className={buttonClasses("quiet", "sm")}>
             <IconDocs size={16} /> Open document page
           </Link>
         </div>
-        <iframe title={`Preview of ${citation.title}${citation.page ? `, page ${citation.page}` : ""}`} src={href} className="h-[60vh] w-full rounded-[10px] border border-line bg-surface" />
+        <ProtectedViewer key={`${citation.version_id}:${citation.page ?? 1}`} documentId={citation.document_id} versionId={citation.version_id} title={citation.title} page={citation.page ?? 1} />
       </div>
     </Drawer>
   );

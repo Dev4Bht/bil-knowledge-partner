@@ -200,3 +200,15 @@ def test_the_backfill_migration_titles_old_chats_from_their_first_question(db, m
     assert old.title == "Is flood damage covered under comprehensive motor insurance a"[:60]  # first question, whitespace collapsed, 60 chars
     assert kept.title == "Renamed by user" and empty.title == "New chat"
     assert old.updated_at == t0 + timedelta(minutes=9)  # the time of the last message
+
+
+def test_every_citation_in_an_answer_opens_as_a_watermarked_page_for_the_person_who_asked(chat):
+    """The citation URL must resolve for that user. For staff the original file is refused, so it points at the viewer."""
+    staff = chat()
+    answer = ask(staff)
+    assert answer["citations"]
+    for citation in answer["citations"]:
+        assert "/pages/" in citation["url"] and not citation["url"].split("#")[0].endswith("/file")
+        page = staff.get(citation["url"])
+        assert page.status_code == 200 and page.headers["content-type"] == "image/jpeg"
+        assert staff.get(f"/documents/{citation['document_id']}/versions/{citation['version_id']}/file").status_code == 403

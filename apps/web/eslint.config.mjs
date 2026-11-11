@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Output of `pnpm build:static` (generated, minified code).
+    "dist-landing/**",
+    ".static-build/**",
   ]),
 ]);
 

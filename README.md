@@ -51,7 +51,7 @@ Evaluation (needs the running stack and Ollama): `cd apps/api && uv run python e
 
 ## Putting the landing page online
 
-Only the landing page can be hosted free; the app needs a database and local models. `cd apps/web && pnpm build:static` writes a deployable folder, and `docs/deploy.md` lists the commands for free static hosts.
+The landing page is live at https://dev4bht.github.io/bil-knowledge-partner/. Only the landing page can be hosted free; the app needs a database and local models. `cd apps/web && pnpm build:static` writes a deployable folder, and `docs/deploy.md` lists the commands for free static hosts.
 
 ## Offline and size notes
 

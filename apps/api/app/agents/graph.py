@@ -73,7 +73,7 @@ def build_graph(ctx: Ctx):
 
 
 def _citation(e: dict) -> Citation:
-    url = f"/documents/{e['document_id']}/versions/{e['version_id']}/file" + (f"#page={e['page']}" if e.get("page") else "")
+    url = f"/documents/{e['document_id']}/versions/{e['version_id']}/pages/{e.get('page') or 1}"
     return Citation(id=e["id"], document_id=e["document_id"], version_id=e["version_id"], title=e["title"],
                     folder_path=e["folder_path"], version_label=e["version_label"], version_status=e["version_status"],
                     section=e["section"], page=e["page"], snippet=e["snippet"], url=url, is_demo_fixture=e["is_demo_fixture"])

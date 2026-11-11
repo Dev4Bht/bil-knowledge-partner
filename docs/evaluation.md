@@ -44,10 +44,18 @@ Latency is noisy on this laptop. The same code measured a 15 s mean in an earlie
 ## Still failing (2 of 18)
 | Question | What happens |
 |----------|--------------|
-| R01 flood, comprehensive | Answers correctly and cites real passages (the Comprehensive page intro and the Handbook flood list), but not the "Coverage" section the check requires. Retrieval has that section in the top 8; synthesis preferred other passages |
-| R10 flood plus claim documents | Gives the full claim-document list correctly but says "natural disasters" instead of naming flood, so the key fact and the "Coverage" citation are missing. Section-level Recall@8 is 0.5 for this question: the long two-part question embeds closer to the claim-checklist than to the coverage list |
+| R01 flood, comprehensive | The answer cites the Comprehensive page intro and a Handbook list, but not the "Coverage" section the check requires. **The Handbook list it cites for flood (p. 46) belongs to the Erection All Risks section, a different product** (see below), so this answer is weaker than the earlier wording "correct and grounded" suggested. |
+| R10 flood plus claim documents | Gives the full claim-document list but says "natural disasters" instead of naming flood, so the key fact and the "Coverage" citation are missing. Section-level Recall@8 is 0.5 for this question: the long two-part question embeds closer to the claim-checklist than to the coverage list. |
 
-These two are answer-quality misses (a vaguer answer than the documents allow), not wrong or ungrounded answers. They are left failing rather than loosening the expectations.
+## Found by reading the answers by hand (2026-11-11)
+The automated checks confirm status, required facts and that every source exists. They do not grade each sentence, and they passed all of the following. None is fixed.
+
+1. **Wrong-product evidence.** "Does BIL's comprehensive motor insurance cover flood damage?" was answered with the line "Storm/tempest, Flood, inundation, cyclone, & allied perils" from Handbook p. 46. That passage continues "...storage, erection, testing and commissioning": it is the Erection All Risks cover, not motor. The text is grounded but the context is wrong, and the verifier did not catch it.
+2. **Duplicated and unrequested claims.** The minimum paid-up capital question produced the same non-life claim twice (from two documents) and added two reinsurance claims that were not asked for.
+3. **A reversed draft reply.** For "How many days do we have to report a motor claim after the loss?" the claim was "Claim intimation (normally within 15 days after accident" (cut off mid-parenthesis) and the English draft said "We will send you a claim intimation normally within 15 days", reversing who intimates the claim.
+4. A third-party-insurance answer included a sentence about every country in the world, copied from a Handbook marketing passage, which does not answer the question.
+
+Likely causes (not yet investigated): synthesis does not check that a passage is about the product asked about; the verifier checks that a claim is supported by its cited text, not that the text is relevant to the question; the reply step rewrites claims without a check that the direction of the statement is preserved. Worth adding to the labelled set: a product-scope check and a human-graded sample.
 
 ## Not covered
 Dzongkha (parked), PDFs in the groundedness proxy, questions in Dzongkha, concurrent users, and any document outside this corpus. A single run per question: there is no variance estimate, and the language model is not deterministic across restarts of the stack.

@@ -5,6 +5,7 @@ import type {
   BusinessLine,
   Capabilities,
   Dashboard,
+  ViewerInfo,
   CompareResult,
   ConversationDetail,
   ConversationSummary,
@@ -138,22 +139,25 @@ export const compareVersions = (documentId: string, from: string, to: string, si
 export const versionFileUrl = (documentId: string, versionId: string) =>
   buildUrl(`/documents/${documentId}/versions/${versionId}/file`);
 
-/** Citation URLs are API-relative paths such as `/documents/{id}/versions/{vid}/file#page=3`. */
-export function citationHref(url: string): string {
-  if (/^https?:\/\//i.test(url)) return url;
-  return `${API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
-}
+/** How many pages a version has in the view-only viewer, and whether anyone may download the original (off by default). */
+export const getViewerInfo = (documentId: string, versionId: string, signal?: AbortSignal) =>
+  request<ViewerInfo>(`/documents/${documentId}/versions/${versionId}/pages`, { signal });
 
-export async function fetchVersionText(documentId: string, versionId: string, signal?: AbortSignal): Promise<string> {
+/**
+ * One page of a document as a watermarked image. The server renders it for this person; there is no text layer and no
+ * original file in the browser. Returns an object URL, which the caller must revoke.
+ */
+export async function fetchPageImage(documentId: string, versionId: string, page: number, signal?: AbortSignal): Promise<string> {
   let response: Response;
   try {
-    response = await fetch(versionFileUrl(documentId, versionId), { credentials: "include", signal });
+    response = await fetch(buildUrl(`/documents/${documentId}/versions/${versionId}/pages/${page}`), { credentials: "include", signal });
   } catch (error) {
     if (error instanceof Error && error.name === "AbortError") throw error;
-    throw new ApiError(0, "network", "The file could not be loaded. Check your connection and try again.");
+    throw new ApiError(0, "network", "The page could not be loaded. Check your connection and try again.");
   }
-  if (!response.ok) throw new ApiError(response.status, "file_error", "This file could not be loaded.");
-  return response.text();
+  if (response.status === 429) throw new ApiError(429, "too_many_pages", "You are opening pages very quickly. Wait a moment and try again.");
+  if (!response.ok) throw new ApiError(response.status, "page_error", "This page could not be loaded.");
+  return URL.createObjectURL(await response.blob());
 }
 
 // ---- Dashboard

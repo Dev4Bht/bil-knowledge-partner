@@ -10,7 +10,7 @@ import { BOOT_SCRIPT } from "@/lib/boot-script";
 
 export const metadata: Metadata = {
   title: { default: "BIL Knowledge Partner", template: "%s | BIL Knowledge Partner" },
-  description: "Sourced answers and draft replies from BIL's approved documents. Hackathon 2026 prototype.",
+  description: "Sourced answers and draft replies from BIL's approved documents. Built for the BIL Hackathon 2026.",
 };
 
 export const viewport: Viewport = {

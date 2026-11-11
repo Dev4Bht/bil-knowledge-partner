@@ -1,223 +1,234 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
+// Italic is used only for emphasis on this page, so it is loaded here and not for the whole app.
+import "@fontsource-variable/fraunces/wght-italic.css";
+import { buttonClasses } from "@/components/ui/button";
 import { Wordmark } from "@/components/ui/logo";
-import { BASE_PATH, STATIC_SITE } from "@/lib/static-site";
-import { AgentExplorer } from "./agent-explorer";
-import { RESULTS, STACK } from "./content";
+import { cn } from "@/lib/format";
+import { APP_URL, STATIC_SITE } from "@/lib/static-site";
+import { EVIDENCE, REFUSALS, ROLES, STACK } from "./content";
 import { LandingHeader, PrimaryAction } from "./landing-header";
+import { Replay } from "./replay";
+import { RUNS } from "./runs";
 
-function Eyebrow({ n, children, dark }: { n: string; children: string; dark?: boolean }) {
+const label = "text-[12px] font-semibold uppercase tracking-[0.16em] text-muted";
+const wrap = "mx-auto w-full max-w-[1200px] px-4 sm:px-6";
+
+/** Emphasis in headings: italic, with a pale gold marker underneath. */
+function Em({ children }: { children: ReactNode }) {
   return (
-    <p className={`flex items-center gap-3 text-[13px] font-semibold uppercase tracking-[0.16em] ${dark ? "text-[#f0c978]" : "text-gold-ink"}`}>
-      <span aria-hidden="true" className="font-display text-[15px] tracking-normal">{n}</span>
-      <span aria-hidden="true" className={`h-px w-8 ${dark ? "bg-[#f0c978]" : "bg-gold"}`} />
+    <em className="whitespace-nowrap font-display italic [box-decoration-break:clone]" style={{ background: "linear-gradient(transparent 62%, var(--gold-soft) 62%)" }}>
       {children}
-    </p>
+    </em>
   );
 }
 
-/** `dark` is for the navy band: its text colours are set explicitly because that band is dark in both themes. */
-function Section({ id, n, eyebrow, title, intro, children, className, dark }: {
-  id: string; n: string; eyebrow: string; title: string; intro?: string; children: React.ReactNode; className?: string; dark?: boolean;
-}) {
+function Section({ id, mark, name, title, children, className }: { id: string; mark: string; name: string; title: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className={`scroll-mt-20 py-16 md:py-24 ${dark ? "bg-rail" : ""} ${className ?? ""}`}>
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <Eyebrow n={n} dark={dark}>{eyebrow}</Eyebrow>
-        <h2 id={`${id}-title`} className={`mt-3 max-w-3xl font-display text-[32px] font-semibold leading-[1.1] md:text-[44px] ${dark ? "text-white" : "text-heading"}`}>{title}</h2>
-        {intro && <p className={`mt-4 max-w-2xl text-[18px] leading-relaxed ${dark ? "text-rail-muted" : "text-muted"}`}>{intro}</p>}
-        <div className="mt-10 md:mt-12">{children}</div>
+    <section id={id} aria-labelledby={`${id}-title`} className={cn("scroll-mt-16 border-t border-line-strong", className)}>
+      <div className={cn(wrap, "grid gap-x-10 gap-y-5 py-14 md:py-20 lg:grid-cols-[170px_minmax(0,1fr)]")}>
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <p className="font-display text-[26px] italic leading-none text-gold-ink" aria-hidden="true">&sect; {mark}</p>
+          <p className={cn(label, "mt-2")}>{name}</p>
+        </div>
+        <div>
+          <h2 id={`${id}-title`} className="max-w-3xl text-balance font-display text-[34px] font-medium leading-[1.06] tracking-[-0.015em] text-heading md:text-[50px]">{title}</h2>
+          <div className="mt-9 md:mt-11">{children}</div>
+        </div>
       </div>
     </section>
   );
 }
 
-function Specimen({ label, children }: { label: string; children: React.ReactNode }) {
+/** The one claim, tied to the one sentence it came from. Real text, recorded 11 Nov 2026. */
+function Specimen() {
+  const run = RUNS[0];
+  const claim = run.claims[0];
+  const source = run.sources[0];
+  const [before, key, after] = source.snippet.split(/(Acknowledgement of complaints within maximum of 3 working days)/);
   return (
-    <div className="mt-4 rounded-[10px] border border-dashed border-line-strong bg-surface-2 p-3 text-[14px] leading-relaxed">
-      <p className="mb-1 text-[12px] font-semibold uppercase tracking-wide text-muted">{label}</p>
-      {children}
-    </div>
+    <figure aria-label="A claim tied to its source" className="relative">
+      <div className="border border-line-strong bg-surface p-5 shadow-[8px_8px_0_var(--line)]">
+        <p className={label}>Question</p>
+        <p className="mt-1 font-display text-[19px] leading-snug text-heading">How quickly must a financial service provider acknowledge a consumer complaint?</p>
+        <p className={cn(label, "mt-5")}>Answer</p>
+        <p className="mt-1 font-display text-[22px] leading-snug text-heading">
+          {claim.text}
+          <sup className="ml-0.5 font-sans text-[14px] font-bold text-gold-ink">1</sup>
+        </p>
+      </div>
+      <div aria-hidden="true" className="ml-8 h-8 w-px border-l-2 border-dotted border-gold" />
+      <div className="relative border border-line-strong border-l-[5px] border-l-gold bg-surface-2 p-5">
+        <p className={label}>
+          <span className="text-gold-ink">1</span> · p. {source.page} · {source.title} · {source.section?.replace(/^§/, "§ ")}
+        </p>
+        <blockquote className="mt-2 font-display text-[17px] italic leading-relaxed text-ink">
+          &hellip;{before}
+          <mark className="not-italic font-medium text-heading" style={{ background: "linear-gradient(transparent 12%, var(--gold-soft) 12%)", padding: "0 2px" }}>{key}</mark>
+          {after.split(";")[0]};&hellip;
+        </blockquote>
+      </div>
+      <figcaption className="mt-4 text-[13px] leading-relaxed text-muted">A real answer, recorded on the demo. The quoted line is the sentence the system cited, from the stored page.</figcaption>
+    </figure>
   );
 }
 
-function TrustCard({ title, children, specimen }: { title: string; children: React.ReactNode; specimen?: React.ReactNode }) {
+function RolesTable() {
   return (
-    <article className="flex flex-col rounded-[14px] border border-line bg-surface p-6">
-      <h3 className="font-display text-[22px] font-semibold leading-snug text-heading">{title}</h3>
-      <p className="mt-2 text-[16px] leading-relaxed">{children}</p>
-      {specimen}
-    </article>
+    <table className="w-full border-collapse text-left">
+      <caption className="sr-only">The six roles, what each does, the rule it cannot break, and what does the work</caption>
+      <thead className="sr-only lg:table-header-group">
+        <tr className="border-b-2 border-heading">
+          {["Role", "What it does", "The rule it cannot break", "Done by"].map((h) => (
+            <th key={h} scope="col" className={cn(label, "py-2 pr-6 font-semibold")}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {ROLES.map((r, i) => (
+          <tr key={r.name} className="block border-b border-line-strong py-5 lg:table-row lg:py-0">
+            <th scope="row" className="block pb-2 pr-6 align-top lg:table-cell lg:py-5">
+              <span className="flex items-baseline gap-3">
+                <span className="font-display text-[18px] italic text-gold-ink">{i + 1}</span>
+                <span className="font-display text-[22px] font-semibold leading-tight text-heading">{r.name}</span>
+              </span>
+            </th>
+            <td data-label="What it does" className="block pb-3 pr-8 align-top text-[16px] leading-relaxed before:mb-0.5 before:block before:text-[11px] before:font-semibold before:uppercase before:tracking-[0.16em] before:text-muted before:content-[attr(data-label)] lg:table-cell lg:py-5 lg:before:hidden">{r.job}</td>
+            <td data-label="The rule it cannot break" className="block pb-3 pr-8 align-top text-[16px] leading-relaxed before:mb-0.5 before:block before:text-[11px] before:font-semibold before:uppercase before:tracking-[0.16em] before:text-muted before:content-[attr(data-label)] lg:table-cell lg:py-5 lg:before:hidden">{r.rule}</td>
+            <td data-label="Done by" className="block align-top text-[15px] text-muted before:mb-0.5 before:block before:text-[11px] before:font-semibold before:uppercase before:tracking-[0.16em] before:content-[attr(data-label)] lg:table-cell lg:w-40 lg:py-5 lg:before:hidden">{r.doneBy}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
-export function LandingPage({ staticSite = STATIC_SITE }: { staticSite?: boolean }) {
+export function LandingPage({ staticSite = STATIC_SITE, appUrl = APP_URL }: { staticSite?: boolean; appUrl?: string }) {
+  // The demo is offered unless this is the public copy with no app to point at.
+  const demo = !staticSite || !!appUrl;
+  const loginHref = staticSite ? `${appUrl}/login` : "/login";
   return (
     <div className="bg-bg text-ink">
-      <a href="#content" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2">
+      <a href="#content" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:bg-surface focus:px-3 focus:py-2">
         Skip to content
       </a>
-      <LandingHeader staticSite={staticSite} />
+      <LandingHeader staticSite={staticSite} appUrl={appUrl} />
 
       <main id="content">
-        {/* Hero */}
-        <section aria-labelledby="hero-title" className="relative overflow-hidden border-b border-line">
-          <div aria-hidden="true" className="pattern-band absolute inset-x-0 top-0 h-3 opacity-60" />
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-14 sm:px-6 md:pb-24 md:pt-20 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)]">
-            <div>
-              <p className="inline-flex items-center gap-2 rounded-full border border-gold/50 bg-gold-soft px-3 py-1 text-[13px] font-semibold text-gold-ink">
-                Hackathon 2026 prototype · public documents only
-              </p>
-              <h1 id="hero-title" className="mt-5 font-display text-[40px] font-semibold leading-[1.04] tracking-tight text-heading sm:text-[52px] lg:text-[60px]">
-                The answer, the page it came from, and a draft reply.
-              </h1>
-              <p className="mt-6 max-w-xl text-[19px] leading-relaxed text-muted">
-                BIL Knowledge Partner is six cooperating AI agents that read only approved BIL documents. Each has one narrow job. When the documents do not say, it tells you so instead of guessing.
-              </p>
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <PrimaryAction size="lg" staticSite={staticSite} />
-                {!staticSite && (
-                  <a href="#how" className="inline-flex min-h-12 items-center gap-2 rounded-[8px] px-4 text-[16px] font-semibold text-link hover:underline">
-                    See how an answer is made <span aria-hidden="true">↓</span>
-                  </a>
-                )}
-              </div>
-              <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-[15px] text-muted">
-                <li className="flex items-center gap-2"><span aria-hidden="true" className="h-1.5 w-1.5 rotate-45 bg-gold" />Runs on one laptop</li>
-                <li className="flex items-center gap-2"><span aria-hidden="true" className="h-1.5 w-1.5 rotate-45 bg-gold" />No cloud AI service</li>
-                <li className="flex items-center gap-2"><span aria-hidden="true" className="h-1.5 w-1.5 rotate-45 bg-gold" />Staff have the final say</li>
-              </ul>
+        <section aria-labelledby="hero-title">
+          <div className={wrap}>
+            <div className={cn(label, "flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-b border-line-strong py-3")}>
+              <span>BIL Knowledge Partner</span>
+              <span>BIL Hackathon 2026 &middot; Agentic Knowledge Partner</span>
             </div>
-
-            <figure className="relative">
-              <div aria-hidden="true" className="absolute -inset-3 -z-10 rotate-[1.5deg] rounded-[20px] bg-gold-soft" />
-              {/* A real capture of the demo answering a question from public BIL documents. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`${BASE_PATH}/landing/answer.png`}
-                width={1272}
-                height={2084}
-                alt="The Ask screen. A question about flood cover on comprehensive motor insurance, an answer with a numbered source, and an English draft reply marked review before use."
-                className="w-full rounded-[14px] border border-line-strong bg-surface shadow-[var(--shadow-lg)]"
-              />
-              <figcaption className="mt-3 text-[14px] text-muted">
-                A real answer from the demo, using public BIL documents. In the demo, each source opens the stored document at that page.
-              </figcaption>
-            </figure>
+            <div className="grid items-start gap-14 pb-16 pt-12 lg:grid-cols-12 lg:gap-10 lg:pb-24 lg:pt-20">
+              <div className="lg:col-span-7">
+                <h1 id="hero-title" className="text-balance font-display text-[clamp(2.7rem,5.6vw,5rem)] font-medium leading-[0.99] tracking-[-0.025em] text-heading">
+                  Every answer comes with <Em>the page</Em> it came from.
+                </h1>
+                <p className="mt-8 max-w-xl text-[19px] leading-relaxed">
+                  BIL Knowledge Partner reads only approved documents and answers staff questions with the exact page behind each claim. When the documents do not say, or disagree, it tells you instead of guessing.
+                </p>
+                <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <PrimaryAction size="lg" staticSite={staticSite} />
+                  {demo && <a href="#run" className="text-[16px] font-semibold text-link underline-offset-4 hover:underline">Watch a real run</a>}
+                </div>
+                <p className={cn(label, "mt-12")}>Six cooperating agents &middot; one laptop &middot; no cloud AI &middot; staff have the final say</p>
+              </div>
+              <div className="lg:col-span-5 lg:pt-3"><Specimen /></div>
+            </div>
           </div>
         </section>
 
-        <Section id="why" n="01" eyebrow="Why this exists" title="Policy is spread across handbooks, circulars and web pages."
-          intro="Versions overlap, and people answer from memory. A reply to a customer can drift from what the documents actually say. This prototype puts the documents first and shows its working.">
-          <div className="grid gap-4 md:grid-cols-3">
-            {[
-              ["Ask", "A staff member describes a real situation in plain words."],
-              ["Check", "The agents find the passages, discard old versions and look for conflicts."],
-              ["Reply", "The answer comes with sources and a draft reply for the staff member to review."],
-            ].map(([t, d], i) => (
-              <div key={t} className="rounded-[14px] border border-line bg-surface p-6">
-                <p className="font-display text-[15px] font-semibold text-gold-ink">0{i + 1}</p>
-                <p className="mt-1 font-display text-[24px] font-semibold text-heading">{t}</p>
-                <p className="mt-2 text-[16px] leading-relaxed text-muted">{d}</p>
-              </div>
-            ))}
+        <Section id="run" mark="1" name="A real run" title={<>Watch the agents answer, <Em>decline</Em> and disagree.</>}>
+          <p className="mb-8 max-w-2xl text-[18px] leading-relaxed text-muted">
+            These are three recorded runs of the demo. The log lines, answers, sources and drafts are exactly what the system returned; only the pacing is staged. Pick a question.
+          </p>
+          <Replay />
+        </Section>
+
+        <Section id="roles" mark="2" name="Six roles" title={<>One job each, and one rule each <Em>that holds</Em>.</>}>
+          <p className="mb-8 max-w-2xl text-[18px] leading-relaxed text-muted">
+            This is a bounded workflow, not an autonomous system. The roles run in a fixed order with limits set in code, and they are the same names you saw in the log.
+          </p>
+          <RolesTable />
+        </Section>
+
+        <Section id="refusals" mark="3" name="What it refuses" title={<>Four things it will <Em>not</Em> do.</>}>
+          <div className="grid gap-px bg-line-strong md:grid-cols-2">
+            {REFUSALS.map((r) => {
+              const [first, ...rest] = r.no.split(" ");
+              return (
+                <article key={r.no} className="bg-bg p-6 md:p-8">
+                  <h3 className="font-display text-[32px] font-medium leading-tight tracking-[-0.01em] text-heading">
+                    <em className="text-gold-ink">{first}</em> {rest.join(" ")}
+                  </h3>
+                  <p className="mt-3 text-[16px] leading-relaxed">{r.body}</p>
+                  {r.example && (
+                    <p className="mt-4 border-l-[3px] border-gold pl-3 text-[14px] leading-relaxed text-muted">
+                      <span className={cn(label, "mb-0.5 block")}>{r.exampleLabel}</span>
+                      {r.example}
+                    </p>
+                  )}
+                </article>
+              );
+            })}
           </div>
         </Section>
 
-        <Section id="how" n="02" eyebrow="How it works" title="Six agents, each with one job."
-          intro="This is a bounded workflow, not an autonomous system. The agents run in a fixed order, with limits set in code. Select a step to see what it does and what stops it going wrong."
-          className="border-y border-line bg-surface-2">
-          <AgentExplorer />
-        </Section>
+        <Section id="evidence" mark="4" name="Evidence" title={<>Tested on <Em>18 labelled questions</Em>.</>}>
+          <table className="w-full border-collapse text-left">
+            <caption className="sr-only">Results of one run of 18 labelled questions</caption>
+            <thead className="sr-only md:table-header-group">
+              <tr className="border-b-2 border-heading">
+                {["Check", "Result", "Note"].map((h) => (
+                  <th key={h} scope="col" className={cn(label, "py-2 pr-6 font-semibold")}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {EVIDENCE.map((e) => (
+                <tr key={e.check} className="block border-b border-line-strong py-4 md:table-row md:py-0">
+                  <th scope="row" className="block pr-6 text-[17px] font-semibold text-heading md:table-cell md:py-4">{e.check}</th>
+                  <td className="block font-display text-[30px] font-medium leading-tight tabular-nums text-heading md:table-cell md:whitespace-nowrap md:py-4 md:pr-8">{e.result}</td>
+                  <td className="block text-[15px] text-muted md:table-cell md:py-4">{e.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-        <Section id="trust" n="03" eyebrow="Why you can trust it" title="Built to say no, and to show its sources.">
-          <div className="grid gap-4 md:grid-cols-2">
-            <TrustCard title="Every claim points to its page"
-              specimen={<Specimen label="What a source looks like"><span className="inline-flex items-center gap-2 rounded-full border border-info/30 bg-info-soft px-2.5 py-0.5 font-semibold text-info"><span className="grid h-4 w-4 place-items-center rounded-full bg-info text-[11px] text-white">1</span>BIL Insurance Handbook · 20 August 2024 · p. 30</span></Specimen>}>
-              Sources are not decoration. Each one opens the stored file at the page and section the claim came from. An answer without a source is not shown.
-            </TrustCard>
-            <TrustCard title="It declines when the documents do not say"
-              specimen={<Specimen label="Behaviour in the evaluation set">Asked for BIL&rsquo;s share price at yesterday&rsquo;s close, it gave no answer and no sources, because no approved document contains it.</Specimen>}>
-              A confident guess is worse than no answer. When the evidence is missing, the agents stop and say what is missing.
-            </TrustCard>
-            <TrustCard title="Old versions and conflicts are shown, not hidden"
-              specimen={<Specimen label="Example, from the labelled test documents">Memo A says 10 working days; Memo B says 20 working days. Both are quoted, and the question goes to the owning team. No reply is drafted.</Specimen>}>
-              Only approved current versions answer by default. When two current documents disagree, it does not pick one.
-            </TrustCard>
-            <TrustCard title="Permissions come first"
-              specimen={<Specimen label="Rule">A document you may not open is answered as &ldquo;not found&rdquo;, the same as one that does not exist.</Specimen>}>
-              Access is enforced in the search itself, before any text reaches a language model, and again when a file is opened. Drafts are never searchable.
-            </TrustCard>
-            <TrustCard title="People stay in charge">
-              Replies are drafts marked <strong>Review before use</strong>. Nothing is sent to a customer automatically, and the assistant never decides whether a claim or loan is approved.
-            </TrustCard>
-            <TrustCard title="Public documents only">
-              The demo uses public BIL and RMA documents. The sign-in accounts are fictional, and no customer personal data is accepted or stored.
-            </TrustCard>
-          </div>
-        </Section>
-
-        <Section id="results" n="04" eyebrow="Measured, not promised" title="What one run on one laptop showed." dark>
-          <dl className="grid gap-px overflow-hidden rounded-[14px] bg-white/15 sm:grid-cols-2 lg:grid-cols-4">
-            {RESULTS.map((r) => (
-              <div key={r.label} className="bg-rail p-6">
-                <dd className="font-display text-[44px] font-semibold leading-none tabular-nums text-white">{r.value}</dd>
-                <dt className="mt-3 text-[16px] font-semibold text-white">{r.label}</dt>
-                <p className="mt-1 text-[14px] text-rail-muted">{r.note}</p>
-              </div>
-            ))}
-          </dl>
-          <p className="mt-8 max-w-3xl text-[16px] leading-relaxed text-rail-muted">
-            Eighteen labelled questions, run once on a laptop with a local 8B model. Two questions still give answers that are correct but less specific than the documents allow. Answers took about half a minute on average. This is a baseline, not a benchmark. The full method and every failure are in <code className="rounded bg-white/10 px-1">docs/evaluation.md</code> in the repository.
+          <p className="mt-8 max-w-2xl text-[15px] leading-relaxed text-muted">
+            One run on a laptop with a local model. The method and every result are in <code className="bg-surface-3 px-1 text-[14px]">docs/evaluation.md</code>.
           </p>
         </Section>
 
-        <Section id="stack" n="05" eyebrow="Under the hood" title="Free, local, and inspectable."
-          intro="Everything runs on the machine in front of you. No paid AI API is used, and no document leaves it.">
-          <ul className="flex flex-wrap gap-2">
-            {STACK.map((s) => (
-              <li key={s} className="rounded-full border border-line-strong bg-surface px-4 py-2 text-[15px] font-semibold text-heading">{s}</li>
-            ))}
-          </ul>
-        </Section>
-
-        <Section id="limits" n="06" eyebrow="Limits" title="What it is not, yet." className="border-t border-line bg-surface-2">
-          <ul className="grid gap-x-10 gap-y-4 md:grid-cols-2">
-            {[
-              ["Not an official BIL service.", "It is a hackathon prototype built on public documents. The mark here is original, not BIL's logo."],
-              ["Dzongkha is experimental.", "The draft is off by default, has not been checked by a Dzongkha speaker, and always says so."],
-              ["Scanned PDFs cannot be read.", "There is no OCR yet. Such files are reported as failed, not silently skipped."],
-              ["Not connected to BIL's own document system.", "A read-only adapter is outlined with its open questions, but no real integration exists."],
-              ["Conflicts are caught by figures.", "A contradiction with no number in it is not flagged automatically."],
-              ["It is not fast.", "A local model takes from about ten seconds to nearly two minutes per answer on a laptop."],
-            ].map(([t, d]) => (
-              <li key={t} className="flex gap-3">
-                <span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rotate-45 bg-gold" />
-                <p className="text-[17px] leading-relaxed"><strong className="text-heading">{t}</strong> {d}</p>
-              </li>
-            ))}
-          </ul>
-        </Section>
-
-        <section aria-labelledby="cta-title" className="border-t border-line">
-          <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 md:py-24">
-            <h2 id="cta-title" className="mx-auto max-w-2xl font-display text-[34px] font-semibold leading-tight text-heading md:text-[44px]">
-              {staticSite ? "The demo runs on a laptop, not on this page." : "See it answer a real question."}
+        <section aria-labelledby="cta-title" className="border-t-2 border-heading bg-surface-2">
+          <div className={cn(wrap, "grid items-end gap-8 py-16 md:py-24 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]")}>
+            <h2 id="cta-title" className="font-display text-[36px] font-medium leading-[1.04] tracking-[-0.02em] text-heading md:text-[56px]">
+              {demo ? <>Try it, then <Em>check its sources</Em>.</> : <>Watch it answer, <Em>decline</Em> and disagree.</>}
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-[18px] text-muted">
-              {staticSite
-                ? "It needs a database and local language models, so this page describes the prototype instead of hosting it."
-                : "Sign in with a demo account, ask about a claim, and open the source it cites."}
-            </p>
-            {!staticSite && <div className="mt-8 flex justify-center"><PrimaryAction size="lg" /></div>}
+            <div>
+              <p className="text-[17px] leading-relaxed text-muted">
+                {demo
+                  ? "Sign in with a demo account, ask about a claim, and open the page each source points to."
+                  : "Three recorded runs show the log, the answer, the sources and the draft exactly as the system produced them."}
+              </p>
+              <div className="mt-6">
+                {demo ? <PrimaryAction size="lg" staticSite={staticSite} appUrl={appUrl} /> : <a href="#run" className={buttonClasses("primary", "lg")}>Watch a real run</a>}
+              </div>
+            </div>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-line bg-surface-2">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-[14px] text-muted sm:px-6 md:flex-row md:items-center md:justify-between">
+      <footer className="border-t border-line-strong">
+        <div className={cn(wrap, "grid gap-6 py-10 text-[14px] leading-relaxed text-muted md:grid-cols-[auto_1fr_auto] md:items-start md:gap-10")}>
           <span className="text-heading"><Wordmark /></span>
-          <p className="max-w-xl">Hackathon 2026 prototype. Not an official BIL service, and not BIL policy. Answers are drafts for staff to review.</p>
-          {staticSite ? <a href="#content" className="font-semibold text-link hover:underline">Back to top</a> : <Link href="/login" className="font-semibold text-link hover:underline">Sign in</Link>}
+          <div className="space-y-2">
+            <p>Built for the BIL Hackathon 2026. Not an official BIL service. Replies are drafts for staff to review.</p>
+            <p>Built with {STACK}. Set in Fraunces and Source Sans 3.</p>
+          </div>
+          {!demo ? <a href="#content" className="font-semibold text-link hover:underline">Back to top</a> : staticSite ? <a href={loginHref} className="font-semibold text-link hover:underline">Sign in</a> : <Link href="/login" className="font-semibold text-link hover:underline">Sign in</Link>}
         </div>
       </footer>
     </div>

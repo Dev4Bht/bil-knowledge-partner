@@ -24,6 +24,12 @@ describe("LoginScreen", () => {
     expect(post.init.credentials).toBe("include");
   });
 
+  it("links the logo to the landing page", () => {
+    mockApi(ready);
+    renderApp(<LoginScreen />);
+    expect(screen.getByRole("link", { name: /about this prototype/i })).toHaveAttribute("href", "/");
+  });
+
   it("never says which half was wrong", async () => {
     const user = userEvent.setup();
     mockApi(ready, route("POST", "/auth/login", { status: 401, body: { detail: "Wrong email or password", code: "invalid_credentials" } }));

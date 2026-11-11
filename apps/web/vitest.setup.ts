@@ -20,6 +20,11 @@ if (!window.matchMedia) {
   })) as unknown as typeof window.matchMedia;
 }
 
+// Page images are shown from object URLs, which jsdom does not provide.
+let blobCount = 0;
+URL.createObjectURL = () => `blob:test-page-${++blobCount}`;
+URL.revokeObjectURL = () => {};
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();

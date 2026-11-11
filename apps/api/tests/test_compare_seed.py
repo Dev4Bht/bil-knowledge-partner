@@ -25,7 +25,7 @@ def test_compare_is_text_only_for_now(client_for, folders):
     assert response.status_code == 422 and response.json()["code"] == "not_text"
 
 
-def test_file_is_served_inline_with_safe_headers(client_for, folders):
+def test_file_is_served_inline_with_safe_headers(client_for, folders, allow_downloads):
     admin = client_for("admin")
     doc = upload(admin, folders["general_insurance/Handbooks"], content=b"<script>alert(1)</script>\n",
                  filename="notes.txt").json()
