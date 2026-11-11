@@ -34,12 +34,13 @@ English draft plus a Dzongkha draft from NLLB-200 (Qwen3 8B produced looping syl
 - Evaluation: 18 labelled questions (12 on real public BIL/RMA documents, 6 controls on labelled fictional fixtures). Last run: 16 of 18 fully pass; the two misses (R01, R10) are vaguer-than-possible answers, not ungrounded ones. Details, causes and the corrected Recall@8 (0.964, section level) are in `evaluation.md`.
 - Web interface: Documents, Ask, Audit; user-selectable theme colour with light and dark; saved chats (re-open, rename, delete one or all; each user sees only their own; answers are re-checked against current access and status every time a chat is opened).
 - Landing page at `/` (public, static): what the six agents do, how answers stay trustworthy, the measured results and the limits. All claims live in `apps/web/src/features/landing/content.ts`; the result figures are copied from `evaluation.md` and must be updated with it. Hero image is a real capture (`apps/web/e2e/landing-assets.mjs`). Browser check: `apps/web/e2e/landing.mjs`. Signed-in visitors see "Open the app"; others "Try the demo".
+- Public static copy of the landing page: `pnpm build:static` in `apps/web` writes `dist-landing/` (no sign-in, no API calls, noindex). Verified in a browser at the site root and under a sub-path. **Not deployed:** hosting needs an account login on the owner's side; commands are in `deploy.md`. The repository is private, so GitHub Pages is not available on a free plan.
 - Dashboard (managers and admins): document, indexing and question-outcome counts, questions per day, refused requests, assistant status. Counts only. Screenshots: `docs/screenshots/dashboard-*.png`; browser check: `apps/web/e2e/dashboard.mjs`.
 - Saved-chat endpoints: `GET/PATCH/DELETE /chat/conversations[/{id}]`, `DELETE /chat/conversations`. Audit records never contain question or answer text.
 - **Not verified:** the PDF preview renders blank in headless Chromium (Chromium's built-in PDF viewer is not available there); it has not been checked in a normal browser by automated test.
 
 ## Test status
-API: 146 tests passed (pytest, real PostgreSQL; the tests against the real Qwen3 and BGE-M3 models are skipped when Ollama is absent). Web: 180 passed (Vitest). Browser scripts under `apps/web/e2e/` run against the live stack (walkthrough, appearance, chat history, live ask).
+API: 146 tests passed (pytest, real PostgreSQL; the tests against the real Qwen3 and BGE-M3 models are skipped when Ollama is absent). Web: 182 passed (Vitest). Browser scripts under `apps/web/e2e/` run against the live stack (walkthrough, appearance, chat history, live ask).
 
 ## Known gaps
 - The knowledge layer shares the DMS database (see `dms-adapter.md`); swapping in BIL's DMS needs a separate index with its own access data.

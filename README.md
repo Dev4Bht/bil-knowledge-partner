@@ -49,6 +49,10 @@ The landing page at http://localhost:3470 explains the agents and links to the d
 
 Evaluation (needs the running stack and Ollama): `cd apps/api && uv run python eval/run_eval.py --password "$DEMO_PASSWORD"`.
 
+## Putting the landing page online
+
+Only the landing page can be hosted free; the app needs a database and local models. `cd apps/web && pnpm build:static` writes a deployable folder, and `docs/deploy.md` lists the commands for free static hosts.
+
 ## Offline and size notes
 
 - Everything runs without internet once the documents and models are on the machine. The importer is the only step that needs internet.
